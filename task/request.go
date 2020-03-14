@@ -8,10 +8,10 @@ import (
 // Serializable structure for http.Request and http.Response
 // with raw body
 type Request struct {
-	Headers http.Header
-	Body    []byte
-	URL     string
-	Method  string
+	Headers http.Header `json:"headers"`
+	Body    []byte      `json:"body"`
+	URL     string      `json:"url"`
+	Method  string      `json:"method"`
 }
 
 func NewRequest(req *http.Request) (*Request, error) {

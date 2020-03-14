@@ -21,22 +21,6 @@ func transformRequestBody(req *http.Request) error {
 	}
 	return nil
 
-	// serialize request
-	// dumped, err := httputil.DumpRequest(req, true)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// log.Println(req.Method)
-	// log.Println(req.Header)
-	// log.Println(req.URL)
-	// log.Println()
-	// log.Println(string(dumped))
-
-	// jsonString, _ := json.Marshal(req.Header)
-
-	// fmt.Println(req.Header)
-	// fmt.Println(string(jsonString))
-
 	// Sidekiq
 	//
 	// 1. Generate request ID

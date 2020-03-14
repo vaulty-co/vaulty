@@ -2,4 +2,12 @@ module github.com/vaulty/proxy
 
 go 1.13
 
-require github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
+require (
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
+	github.com/garyburd/redigo v1.6.0 // indirect
+	github.com/go-redis/redis v6.15.7+incompatible
+	github.com/go-redis/redis/v7 v7.2.0
+	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
+)

@@ -12,9 +12,10 @@ type Request struct {
 	Body    []byte      `json:"body"`
 	URL     string      `json:"url"`
 	Method  string      `json:"method"`
+	RouteID string      `json:"route_id"`
 }
 
-func newSerializableRequest(req *http.Request) (*Request, error) {
+func newSerializableRequest(routeID string, req *http.Request) (*Request, error) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
@@ -25,5 +26,6 @@ func newSerializableRequest(req *http.Request) (*Request, error) {
 		Body:    body,
 		URL:     req.URL.String(),
 		Method:  req.Method,
+		RouteID: routeID,
 	}, nil
 }

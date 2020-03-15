@@ -15,20 +15,23 @@ import (
 )
 
 type Transformer struct {
-	httpRequest  *http.Request
+	// httpRequest  *http.Request
 	httpResponse *http.Response
 	jobID        string
+	routeID      string
 }
 
-func NewRequestBodyTransformer(httpRequest *http.Request) *Transformer {
+func NewTransformer() *Transformer {
+	// func NewRequestBodyTransformer(routeID string, httpRequest *http.Request) *Transformer {
 	return &Transformer{
-		httpRequest: httpRequest,
-		jobID:       genID(),
+		// httpRequest: httpRequest,
+		jobID: genID(),
+		// routeID:     routeID,
 	}
 }
 
-func (t *Transformer) TransformRequestBody() error {
-	request, err := newSerializableRequest(t.httpRequest)
+func (t *Transformer) TransformRequestBody(routeID string, httpRequest *http.Request) error {
+	request, err := newSerializableRequest(routeID, httpRequest)
 	if err != nil {
 		return err
 	}
@@ -39,9 +42,9 @@ func (t *Transformer) TransformRequestBody() error {
 	}
 
 	body, size := newBody(result.Body)
-	t.httpRequest.Header.Del("Content-Length")
-	t.httpRequest.Body = body
-	t.httpRequest.ContentLength = size
+	httpRequest.Header.Del("Content-Length")
+	httpRequest.Body = body
+	httpRequest.ContentLength = size
 
 	return nil
 }

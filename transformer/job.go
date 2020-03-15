@@ -1,4 +1,4 @@
-package task
+package transformer
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/vaulty/proxy/redis"
 )
 
-type Task struct {
+type Job struct {
 	WorkerClass string      `json:"class"`
 	Queue       string      `json:"queue"`
 	Args        interface{} `json:"args"`
@@ -17,8 +17,8 @@ type Task struct {
 	EnqueuedAt  int64       `json:"enqueued_at"`
 }
 
-func NewTask(workerClass string, payload interface{}, jid string) *Task {
-	return &Task{
+func NewJob(workerClass string, payload interface{}, jid string) *Job {
+	return &Job{
 		WorkerClass: workerClass,
 		Args:        payload,
 		Retry:       false,
@@ -26,17 +26,16 @@ func NewTask(workerClass string, payload interface{}, jid string) *Task {
 	}
 }
 
-func (task *Task) Perform(queue string) error {
-	task.CreatedAt = time.Now().UnixNano()
-	task.EnqueuedAt = time.Now().UnixNano()
-	task.Queue = queue
+func (job *Job) Perform(queue string) error {
+	job.CreatedAt = time.Now().UnixNano()
+	job.EnqueuedAt = time.Now().UnixNano()
+	job.Queue = queue
 
-	taskJSON, err := json.Marshal(task)
+	jobJSON, err := json.Marshal(job)
 	if err != nil {
 		return err
 	}
 
-	redis.Client().LPush("queue:"+queue, taskJSON)
-
-	return nil
+	_, err = redis.Client().LPush("queue:"+queue, jobJSON).Result()
+	return err
 }

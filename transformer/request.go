@@ -1,4 +1,4 @@
-package task
+package transformer
 
 import (
 	"io/ioutil"
@@ -14,7 +14,7 @@ type Request struct {
 	Method  string      `json:"method"`
 }
 
-func NewRequest(req *http.Request) (*Request, error) {
+func newSerializableRequest(req *http.Request) (*Request, error) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err

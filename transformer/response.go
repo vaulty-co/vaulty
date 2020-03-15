@@ -1,4 +1,4 @@
-package task
+package transformer
 
 // Serializable structure for Sidekiq Worker
 // with raw body

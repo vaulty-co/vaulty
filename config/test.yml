@@ -1,0 +1,4 @@
+environment: test
+base_host: proxy.test
+redis:
+  url: redis://localhost/1

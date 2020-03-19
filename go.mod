@@ -3,6 +3,7 @@ module github.com/vaulty/proxy
 go 1.13
 
 require (
+	github.com/BurntSushi/toml v0.3.1
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
 	github.com/garyburd/redigo v1.6.0 // indirect

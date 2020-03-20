@@ -1,8 +1,10 @@
 package model
 
+import "net/url"
+
 type Route struct {
-	ID       string
-	Upstream string
+	ID          string
+	UpstreamURL *url.URL
 }
 
 const (

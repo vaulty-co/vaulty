@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/vaulty/proxy/model"
 )
@@ -14,12 +15,16 @@ func (s *Storage) FindRoute(vaultID, type_, method, path string) (*model.Route, 
 		return nil, nil
 	}
 
-	routeUpstreamKey := fmt.Sprintf("route:%s:upstream", routeID)
-	routeUpstream := s.redisClient.Get(routeUpstreamKey).Val()
+	upstreamKey := fmt.Sprintf("route:%s:upstream", routeID)
+	upstream := s.redisClient.Get(upstreamKey).Val()
+	upstreamURL, err := url.Parse(upstream)
+	if err != nil {
+		return nil, err
+	}
 
 	return &model.Route{
-		ID:       routeID,
-		Upstream: routeUpstream,
+		ID:          routeID,
+		UpstreamURL: upstreamURL,
 	}, nil
 
 }

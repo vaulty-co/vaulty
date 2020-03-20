@@ -1,9 +1,11 @@
 package core
 
-import "github.com/go-redis/redis"
+import (
+	"github.com/go-redis/redis"
+)
 
-func NewRedisClient() *redis.Client {
-	redisOptions, err := redis.ParseURL(Config.Redis.URL)
+func NewRedisClient(config *Configuration) *redis.Client {
+	redisOptions, err := redis.ParseURL(config.Redis.URL)
 	if err != nil {
 		panic(err)
 	}

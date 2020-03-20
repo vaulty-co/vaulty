@@ -13,5 +13,6 @@ require (
 	github.com/google/martian v2.1.0+incompatible
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/kelseyhightower/envconfig v1.4.0
-	gopkg.in/yaml.v2 v2.2.4
+	github.com/rainhq/rain v1.2.1
+	gopkg.in/yaml.v2 v2.2.8
 )

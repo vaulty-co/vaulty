@@ -17,11 +17,13 @@ type Configuration struct {
 
 var Config *Configuration
 
-func LoadConfig(file string) {
+func LoadConfig(file string) *Configuration {
 	Config = &Configuration{}
 
 	readFile(file, Config)
 	readEnv(Config)
+
+	return Config
 }
 
 func readFile(file string, cfg *Configuration) {

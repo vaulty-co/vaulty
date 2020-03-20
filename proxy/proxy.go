@@ -7,21 +7,24 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/proxy/transformer"
 )
 
 type Proxy struct {
-	server  *goproxy.ProxyHttpServer
-	storage *storage.Storage
+	server      *goproxy.ProxyHttpServer
+	storage     *storage.Storage
+	transformer *transformer.Transformer
+	config      *core.Configuration
 }
 
-func NewProxy() *Proxy {
+func NewProxy(storage *storage.Storage, transformer *transformer.Transformer, config *core.Configuration) *Proxy {
 	server := goproxy.NewProxyHttpServer()
-	redisClient := core.NewRedisClient()
-	storage := storage.NewStorage(redisClient)
 
 	proxy := &Proxy{
-		server:  server,
-		storage: storage,
+		server:      server,
+		storage:     storage,
+		transformer: transformer,
+		config:      config,
 	}
 
 	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -9,6 +9,8 @@ import (
 	"github.com/vaulty/proxy/core"
 )
 
+var redisClient *redis.Client
+
 func TestMain(m *testing.M) {
 	core.LoadConfig("../config/test.yml")
 
@@ -17,7 +19,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	redisClient := redis.NewClient(redisOptions)
+	redisClient = redis.NewClient(redisOptions)
 	redisClient.FlushAll()
 
 	exitCode := m.Run()

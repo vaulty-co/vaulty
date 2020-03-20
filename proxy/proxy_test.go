@@ -37,10 +37,8 @@ func oneShotProxy(proxy *Proxy) (client *http.Client, s *httptest.Server) {
 }
 
 func setVaultUpstream(vaultID, upstream string) {
-	_vault := &vault{
-		ID: vaultID,
-	}
-	_vault.setUpstream(upstream)
+	upstreamKey := fmt.Sprintf("vault:%s:upstream", vaultID)
+	redisClient.Set(upstreamKey, upstream, 0)
 }
 
 func readRequestBody(req *http.Request) string {

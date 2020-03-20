@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 )
 
@@ -20,21 +19,7 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, readRequestBody(req))
 }
 
-// func init() {
-// 	http.DefaultServeMux.Handle("/", EchoHandler{})
-// }
-
-// var https = httptest.NewTLSServer(nil)
 var upstream = httptest.NewServer(EchoHandler{})
-
-func oneShotProxy(proxy *Proxy) (client *http.Client, s *httptest.Server) {
-	s = httptest.NewServer(proxy.server)
-
-	proxyUrl, _ := url.Parse(s.URL)
-	tr := &http.Transport{TLSClientConfig: acceptAllCerts, Proxy: http.ProxyURL(proxyUrl)}
-	client = &http.Client{Transport: tr}
-	return
-}
 
 func setVaultUpstream(vaultID, upstream string) {
 	upstreamKey := fmt.Sprintf("vault:%s:upstream", vaultID)
@@ -67,7 +52,7 @@ func TestIboundRequestForwardedToUpstream(t *testing.T) {
 	proxy := httptest.NewServer(NewProxy().server)
 	defer proxy.Close()
 
-	req, _ := http.NewRequest("POST", proxy.URL, nil)
+	req, _ := http.NewRequest(http.MethodPost, proxy.URL, nil)
 	req.Host = "vlt123.proxy.test"
 
 	client := &http.Client{}

@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -34,19 +33,14 @@ func NewProxy() *Proxy {
 
 	// proxy.OnRequest(matchOutboundRoute()).HandleConnect(goproxy.AlwaysMitm)
 
-	server.OnRequest(proxy.vaultDoesNotExist()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
-	})
+	// if vault does not exist we respond with 404
+	server.OnRequest(proxy.vaultDoesNotExist()).Do(proxy.NotFound("Vault was not found"))
 
-	server.OnRequest(proxy.routeExists()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		fmt.Println("route found: ", ctxUserData(ctx).route.ID)
-		return req, nil
-	})
+	// if vault exist and there is a route for current request
+	server.OnRequest(proxy.routeExists()).Do(proxy.TransformRequestBody())
 
-	// proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	// 	fmt.Println("Global handler")
-	// 	return req, nil
-	// })
+	// if vault exist and there were no route
+	server.OnRequest().Do(proxy.HandleRequestAsUsual())
 
 	server.Verbose = true
 

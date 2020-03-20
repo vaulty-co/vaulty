@@ -1,0 +1,4 @@
+environment: development
+base_host: proxy.vaulty.dev
+redis:
+  url: redis://localhost/0

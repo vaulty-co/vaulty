@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/proxy"
@@ -10,9 +11,7 @@ import (
 func main() {
 	env := flag.String("e", "development", "proxy environment")
 	flag.Parse()
-	core.LoadConfig(*env)
-
-	core.InitRedisClient(core.Config())
+	core.LoadConfig(fmt.Sprintf("config/%s.yml", *env))
 
 	proxy := proxy.NewProxy()
 	proxy.Run()

@@ -6,29 +6,39 @@ import (
 	"net/http"
 
 	"github.com/elazarl/goproxy"
+	"github.com/vaulty/proxy/core"
+	"github.com/vaulty/proxy/storage"
 )
 
 type Proxy struct {
-	server *goproxy.ProxyHttpServer
+	server  *goproxy.ProxyHttpServer
+	storage *storage.Storage
 }
 
 func NewProxy() *Proxy {
-	proxy := goproxy.NewProxyHttpServer()
+	server := goproxy.NewProxyHttpServer()
+	redisClient := core.NewRedisClient()
+	storage := storage.NewStorage(redisClient)
 
-	proxy.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	proxy := &Proxy{
+		server:  server,
+		storage: storage,
+	}
+
+	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req.URL.Scheme = "https"
 		req.URL.Host = "inbound-request.int"
 
-		proxy.ServeHTTP(w, req)
+		server.ServeHTTP(w, req)
 	})
 
 	// proxy.OnRequest(matchOutboundRoute()).HandleConnect(goproxy.AlwaysMitm)
 
-	proxy.OnRequest(vaultDoesNotExist()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+	server.OnRequest(proxy.vaultDoesNotExist()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
 	})
 
-	proxy.OnRequest(routeExists()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+	server.OnRequest(proxy.routeExists()).DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		fmt.Println("route found: ", ctxUserData(ctx).route.ID)
 		return req, nil
 	})
@@ -38,11 +48,9 @@ func NewProxy() *Proxy {
 	// 	return req, nil
 	// })
 
-	proxy.Verbose = true
+	server.Verbose = true
 
-	return &Proxy{
-		server: proxy,
-	}
+	return proxy
 }
 
 func (p *Proxy) Run() {

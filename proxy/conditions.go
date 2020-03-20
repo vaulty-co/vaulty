@@ -4,39 +4,34 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 
 	"github.com/elazarl/goproxy"
 	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/redis"
+	"github.com/vaulty/proxy/model"
 )
 
-func vaultDoesNotExist() goproxy.ReqConditionFunc {
+func (p *Proxy) vaultDoesNotExist() goproxy.ReqConditionFunc {
 	return func(req *http.Request, ctx *goproxy.ProxyCtx) bool {
-		fmt.Println(req.Header)
-
 		vaultID, err := getVaultID(req.Host)
 		if err != nil {
 			ctx.Warnf(err.Error())
 			return true
 		}
 
-		vlt := &vault{
-			ID: vaultID,
-		}
-
-		upstreamURL, err := url.Parse(vlt.GetUpstream())
-
-		fmt.Println("Got upstreamURL: ", upstreamURL)
+		vault, err := p.storage.FindVault(vaultID)
 		if err != nil {
 			ctx.Warnf(err.Error())
 			return true
 		}
 
-		req.URL = upstreamURL
+		if vault == nil {
+			return true
+		}
 
-		ctxUserData(ctx).vault = vlt
+		req.URL = vault.UpstreamURL
+
+		ctxUserData(ctx).vault = vault
 
 		return false
 	}
@@ -47,14 +42,14 @@ var vaultIDRegexp *regexp.Regexp
 func getVaultID(host string) (string, error) {
 	if vaultIDRegexp == nil {
 		// vltXXXX.proxy.vaulty.co
-		vaultHost := fmt.Sprintf(`^(vlt\w+).%s(:\d+)?$`, core.Config().Host)
+		vaultHost := fmt.Sprintf(`^(vlt\w+).%s(:\d+)?$`, core.Config.BaseHost)
 		vaultIDRegexp = regexp.MustCompile(vaultHost)
 	}
 
 	matches := vaultIDRegexp.FindAllStringSubmatch(host, -1)
 
 	if len(matches) != 1 {
-		return "", errors.New(fmt.Sprintf("Received request for %s instead of configured host: vlt*.%s", host, core.Config().Host))
+		return "", errors.New(fmt.Sprintf("Received request for %s instead of configured host: vlt*.%s", host, core.Config.BaseHost))
 	}
 
 	vaultID := matches[0][1]
@@ -64,23 +59,20 @@ func getVaultID(host string) (string, error) {
 
 // matches route and find route id
 // vlt2uYBrnYkUnEF:INBOUND:POST:/records
-func routeExists() goproxy.ReqConditionFunc {
+func (p *Proxy) routeExists() goproxy.ReqConditionFunc {
 	return func(req *http.Request, ctx *goproxy.ProxyCtx) bool {
 		vaultID := ctxUserData(ctx).vault.ID
-		routeKey := fmt.Sprintf("%s:%s:%s:%s", vaultID, "INBOUND", req.Method, req.URL.Path)
-		ctx.Logf("Route key: " + routeKey)
-
-		routeID := redis.Client().Get(routeKey).Val()
-		ctx.Logf("RouteID: " + routeID)
-
-		if routeID == "" {
-			ctx.Logf("Route was not found")
+		route, err := p.storage.FindRoute(vaultID, model.RouteInbound, req.Method, req.URL.Path)
+		if err != nil {
+			ctx.Warnf(err.Error())
 			return false
 		}
 
-		ctxUserData(ctx).route = &route{
-			ID: routeID,
+		if route == nil {
+			return false
 		}
+
+		ctxUserData(ctx).route = route
 
 		return true
 	}

@@ -33,6 +33,8 @@ func NewProxy() *Proxy {
 
 	// proxy.OnRequest(matchOutboundRoute()).HandleConnect(goproxy.AlwaysMitm)
 
+	// server.OnRequest().Do(proxy.FindVaultAndRoute())
+
 	// if vault does not exist we respond with 404
 	server.OnRequest(proxy.vaultDoesNotExist()).Do(proxy.NotFound("Vault was not found"))
 

@@ -28,7 +28,9 @@ func (p *Proxy) vaultDoesNotExist() goproxy.ReqConditionFunc {
 			return true
 		}
 
-		req.URL = vault.UpstreamURL
+		req.URL.Scheme = vault.UpstreamURL.Scheme
+		req.URL.User = vault.UpstreamURL.User
+		req.URL.Host = vault.UpstreamURL.Host
 
 		ctxUserData(ctx).vault = vault
 
@@ -61,6 +63,7 @@ func getVaultID(baseHost, host string) (string, error) {
 func (p *Proxy) routeExists() goproxy.ReqConditionFunc {
 	return func(req *http.Request, ctx *goproxy.ProxyCtx) bool {
 		vaultID := ctxUserData(ctx).vault.ID
+		ctx.Warnf("Path" + req.URL.String())
 		route, err := p.storage.FindRoute(vaultID, model.RouteInbound, req.Method, req.URL.Path)
 		if err != nil {
 			ctx.Warnf(err.Error())

@@ -12,6 +12,7 @@ import (
 
 func main() {
 	env := flag.String("e", "development", "proxy environment")
+	port := flag.String("p", "8080", "proxy port")
 	flag.Parse()
 	config := core.LoadConfig(fmt.Sprintf("config/%s.yml", *env))
 
@@ -20,5 +21,5 @@ func main() {
 	transformer := transformer.NewTransformer(redisClient)
 
 	proxy := proxy.NewProxy(storage, transformer, config)
-	proxy.Run()
+	proxy.Run(*port)
 }

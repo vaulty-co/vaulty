@@ -52,8 +52,8 @@ func NewProxy(storage *storage.Storage, transformer *transformer.Transformer, co
 	return proxy
 }
 
-func (p *Proxy) Run() {
-	log.Fatal(http.ListenAndServe(":8080", p.server))
+func (p *Proxy) Run(port string) {
+	log.Fatal(http.ListenAndServe(":"+port, p.server))
 }
 
 // match route and find route id

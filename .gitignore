@@ -1,1 +1,4 @@
 /bin/*
+/.tags
+/card.json
+/data.json

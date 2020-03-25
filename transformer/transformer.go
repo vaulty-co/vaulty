@@ -3,7 +3,6 @@ package transformer
 import (
 	"bufio"
 	"bytes"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,24 +10,22 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/vaulty/proxy/redis"
+	"github.com/go-redis/redis"
 )
 
 type Transformer struct {
-	httpRequest  *http.Request
-	httpResponse *http.Response
-	jobID        string
+	redisClient *redis.Client
 }
 
-func NewRequestBodyTransformer(httpRequest *http.Request) *Transformer {
+func NewTransformer(redisClient *redis.Client) *Transformer {
+	// func NewRequestBodyTransformer(routeID string, httpRequest *http.Request) *Transformer {
 	return &Transformer{
-		httpRequest: httpRequest,
-		jobID:       genID(),
+		redisClient: redisClient,
 	}
 }
 
-func (t *Transformer) TransformRequestBody() error {
-	request, err := newSerializableRequest(t.httpRequest)
+func (t *Transformer) TransformRequestBody(routeID string, httpRequest *http.Request) error {
+	request, err := newSerializableRequest(routeID, httpRequest)
 	if err != nil {
 		return err
 	}
@@ -39,16 +36,20 @@ func (t *Transformer) TransformRequestBody() error {
 	}
 
 	body, size := newBody(result.Body)
-	t.httpRequest.Header.Del("Content-Length")
-	t.httpRequest.Body = body
-	t.httpRequest.ContentLength = size
+	httpRequest.Header.Del("Content-Length")
+	httpRequest.Body = body
+	httpRequest.ContentLength = size
 
 	return nil
 }
 
 func (t *Transformer) transform(workerClass string, payload interface{}) (*Response, error) {
+	transformJob := newSidekiqJob(workerClass, payload)
+
+	// TODO: we should add timeout here
+	// to handle delays with sidekiq
 	// Subscribe for job status
-	pubsub := redis.Client().Subscribe(t.jobID)
+	pubsub := t.redisClient.Subscribe(transformJob.JID)
 	defer pubsub.Close()
 
 	// Wait for confirmation that subscription is created before publishing anything.
@@ -60,8 +61,13 @@ func (t *Transformer) transform(workerClass string, payload interface{}) (*Respo
 	ch := pubsub.ChannelSize(1)
 
 	// Enqueue sidekiq job
-	transformJob := NewJob(workerClass, payload, t.jobID)
-	err = transformJob.Perform("default")
+	jobJSON, err := transformJob.JSON()
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = t.redisClient.LPush("queue:default", jobJSON).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +78,7 @@ func (t *Transformer) transform(workerClass string, payload interface{}) (*Respo
 		return nil, errors.New(fmt.Sprintf("Unexpected return from worker: %s", status.Payload))
 	}
 
-	rawResponse := redis.Client().Get(t.jobID).Val()
+	rawResponse := t.redisClient.Get(transformJob.JID).Val()
 	response := &Response{}
 	err = json.Unmarshal([]byte(rawResponse), response)
 
@@ -84,14 +90,4 @@ func newBody(body []byte) (io.ReadCloser, int64) {
 	size := int64(len(body))
 
 	return ioutil.NopCloser(bodyReader), size
-}
-
-func genID() string {
-	// Return 12 random bytes as 24 character hex
-	b := make([]byte, 12)
-	_, err := io.ReadFull(rand.Reader, b)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", b)
 }

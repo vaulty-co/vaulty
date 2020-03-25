@@ -1,34 +1,25 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"flag"
+	"fmt"
 
-	"github.com/elazarl/goproxy"
+	"github.com/vaulty/proxy/core"
+	"github.com/vaulty/proxy/proxy"
+	"github.com/vaulty/proxy/storage"
 	"github.com/vaulty/proxy/transformer"
 )
 
-func errResponse(r *http.Request, message string) *http.Response {
-	return goproxy.NewResponse(r,
-		goproxy.ContentTypeText,
-		http.StatusBadGateway,
-		message)
-}
-
 func main() {
-	proxy := goproxy.NewProxyHttpServer()
-	proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		tr := transformer.NewRequestBodyTransformer(req)
-		err := tr.TransformRequestBody()
-		if err != nil {
-			return nil, errResponse(req, err.Error())
-		}
+	env := flag.String("e", "development", "proxy environment")
+	port := flag.String("p", "8080", "proxy port")
+	flag.Parse()
+	config := core.LoadConfig(fmt.Sprintf("config/%s.yml", *env))
 
-		return req, nil
-	})
+	redisClient := core.NewRedisClient(config)
+	storage := storage.NewStorage(redisClient)
+	transformer := transformer.NewTransformer(redisClient)
 
-	proxy.Verbose = true
-
-	log.Fatal(http.ListenAndServe(":8080", proxy))
+	proxy := proxy.NewProxy(storage, transformer, config)
+	proxy.Run(*port)
 }

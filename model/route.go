@@ -8,6 +8,6 @@ type Route struct {
 }
 
 const (
-	RouteInbound   = "INBOUND"
-	RounteOutbound = "OUTBOUND"
+	RouteInbound   = "inbound"
+	RounteOutbound = "outbound"
 )

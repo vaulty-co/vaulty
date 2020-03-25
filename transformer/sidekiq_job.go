@@ -9,18 +9,20 @@ import (
 )
 
 type sidekiqJob struct {
-	WorkerClass string      `json:"class"`
-	Args        interface{} `json:"args"`
-	Retry       bool        `json:"retry"`
-	JID         string      `json:"jid"`
-	CreatedAt   int64       `json:"created_at"`
-	EnqueuedAt  int64       `json:"enqueued_at"`
+	WorkerClass string        `json:"class"`
+	Args        []interface{} `json:"args"`
+	Retry       bool          `json:"retry"`
+	JID         string        `json:"jid"`
+	CreatedAt   int64         `json:"created_at"`
+	EnqueuedAt  int64         `json:"enqueued_at"`
 }
 
 func newSidekiqJob(workerClass string, payload interface{}) *sidekiqJob {
+	args := make([]interface{}, 1)
+	args[0] = payload
 	return &sidekiqJob{
 		WorkerClass: workerClass,
-		Args:        payload,
+		Args:        args,
 		Retry:       false,
 		JID:         genID(),
 	}

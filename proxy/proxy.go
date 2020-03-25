@@ -55,17 +55,3 @@ func NewProxy(storage *storage.Storage, transformer *transformer.Transformer, co
 func (p *Proxy) Run(port string) {
 	log.Fatal(http.ListenAndServe(":"+port, p.server))
 }
-
-// match route and find route id
-// vlt2uYBrnYkUnEF:INBOUND:POST:/records
-// var routeID string
-
-// if req.URL.Path == "/credit-cards" && req.Method == "POST" {
-// 	routeID = "1"
-// }
-
-// tr := transformer.NewTransformer()
-// err := tr.TransformRequestBody(routeID, req)
-// if err != nil {
-// 	return nil, errResponse(req, err.Error())
-// }

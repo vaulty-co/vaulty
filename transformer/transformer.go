@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/go-redis/redis"
 )
@@ -16,6 +16,8 @@ import (
 type Transformer struct {
 	redisClient *redis.Client
 }
+
+const defaultTransformationTimeout = 2 * time.Second
 
 func NewTransformer(redisClient *redis.Client) *Transformer {
 	// func NewRequestBodyTransformer(routeID string, httpRequest *http.Request) *Transformer {
@@ -30,7 +32,7 @@ func (t *Transformer) TransformRequestBody(routeID string, httpRequest *http.Req
 		return err
 	}
 
-	result, err := t.transform("ProxyWorker::Worker", request)
+	result, err := t.transform("ProxyWorker::RequestBodyTransformer", request)
 	if err != nil {
 		return err
 	}
@@ -43,7 +45,7 @@ func (t *Transformer) TransformRequestBody(routeID string, httpRequest *http.Req
 	return nil
 }
 
-func (t *Transformer) transform(workerClass string, payload interface{}) (*Response, error) {
+func (t *Transformer) transform(workerClass string, payload interface{}) (*Result, error) {
 	transformJob := newSidekiqJob(workerClass, payload)
 
 	// TODO: we should add timeout here
@@ -72,17 +74,27 @@ func (t *Transformer) transform(workerClass string, payload interface{}) (*Respo
 		return nil, err
 	}
 
+	timeout := make(chan bool, 1)
+	go func() {
+		time.Sleep(defaultTransformationTimeout)
+		timeout <- true
+	}()
+
 	// Wait for task status
-	status := <-ch
-	if status.Payload != "done" {
-		return nil, errors.New(fmt.Sprintf("Unexpected return from worker: %s", status.Payload))
+	select {
+	case status := <-ch:
+		if status.Payload != "done" {
+			return nil, fmt.Errorf("Unexpected return from worker: %s", status.Payload)
+		}
+	case <-timeout:
+		return nil, fmt.Errorf("Transformation task timeout: %s", transformJob.JID)
 	}
 
-	rawResponse := t.redisClient.Get(transformJob.JID).Val()
-	response := &Response{}
-	err = json.Unmarshal([]byte(rawResponse), response)
+	rawResult := t.redisClient.Get(transformJob.JID).Val()
+	result := &Result{}
+	err = json.Unmarshal([]byte(rawResult), result)
 
-	return response, err
+	return result, err
 }
 
 func newBody(body []byte) (io.ReadCloser, int64) {

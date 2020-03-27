@@ -48,10 +48,7 @@ func (t *Transformer) TransformRequestBody(routeID string, httpRequest *http.Req
 func (t *Transformer) transform(workerClass string, payload interface{}) (*Result, error) {
 	transformJob := newSidekiqJob(workerClass, payload)
 
-	// TODO: we should add timeout here
-	// to handle delays with sidekiq
-	// Subscribe for job status
-	pubsub := t.redisClient.Subscribe(transformJob.JID)
+	pubsub := t.redisClient.Subscribe("task_" + transformJob.JID)
 	defer pubsub.Close()
 
 	// Wait for confirmation that subscription is created before publishing anything.

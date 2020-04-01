@@ -39,7 +39,7 @@ func (p *Proxy) HandleRequest(message string) goproxy.ReqHandler {
 	})
 }
 
-func (p *Proxy) TransformResponseBody() goproxy.RespHandler {
+func (p *Proxy) HandleResponse() goproxy.RespHandler {
 	return goproxy.FuncRespHandler(func(res *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 		// no route for current request
 		if ctxUserData(ctx).route == nil {
@@ -51,8 +51,6 @@ func (p *Proxy) TransformResponseBody() goproxy.RespHandler {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
 		}
 
-		// resp.StatusCode = http.StatusOK
-		// resp.Body = ioutil.NopCloser(bytes.NewBufferString("chico"))
 		return res
 	})
 }

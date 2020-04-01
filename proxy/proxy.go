@@ -36,8 +36,6 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 
 	// proxy.OnRequest(matchOutboundRoute()).HandleConnect(goproxy.AlwaysMitm)
 
-	// server.OnRequest().Do(proxy.FindVaultAndRoute())
-
 	// if vault does not exist we respond with 404
 	server.OnRequest(proxy.vaultDoesNotExist()).Do(proxy.NotFound("Vault was not found"))
 
@@ -50,7 +48,7 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	// even without following line
 	server.OnRequest().Do(proxy.HandleRequestAsUsual())
 
-	server.OnResponse().Do(proxy.TransformResponseBody())
+	server.OnResponse().Do(proxy.HandleResponse())
 
 	server.Verbose = true
 

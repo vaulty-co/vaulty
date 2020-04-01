@@ -23,9 +23,7 @@ func (t *Transformer) TransformRequestBody(routeID string, req *http.Request) er
 	b, _ := ioutil.ReadAll(req.Body)
 	body := string(b)
 
-	if routeID == "rt1" {
-		body += " transformed"
-	}
+	body += " transformed"
 
 	size := int64(len(body))
 
@@ -39,22 +37,20 @@ func (t *Transformer) TransformRequestBody(routeID string, req *http.Request) er
 }
 
 func (t *Transformer) TransformResponseBody(routeID string, res *http.Response) error {
-	if routeID == "rt1" {
-		b, _ := ioutil.ReadAll(res.Body)
-		body := string(b)
+	b, _ := ioutil.ReadAll(res.Body)
+	body := string(b)
 
-		log.Printf("Transforming response body for route: %s", routeID)
+	log.Printf("Transforming response body for route: %s", routeID)
 
-		body += " transformed"
+	body += " transformed"
 
-		res.Body = ioutil.NopCloser(bufio.NewReader(bytes.NewBufferString(body)))
+	res.Body = ioutil.NopCloser(bufio.NewReader(bytes.NewBufferString(body)))
 
-		size := int64(len(body))
-		res.Header.Del("Content-Length")
-		res.ContentLength = size
+	size := int64(len(body))
+	res.Header.Del("Content-Length")
+	res.ContentLength = size
 
-		log.Println("Done")
-	}
+	log.Println("Done")
 
 	return nil
 }

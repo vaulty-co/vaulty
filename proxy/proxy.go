@@ -12,12 +12,12 @@ import (
 
 type Proxy struct {
 	server      *goproxy.ProxyHttpServer
-	storage     *storage.Storage
-	transformer *transformer.Transformer
+	storage     storage.Storage
+	transformer transformer.Transformer
 	config      *core.Configuration
 }
 
-func NewProxy(storage *storage.Storage, transformer *transformer.Transformer, config *core.Configuration) *Proxy {
+func NewProxy(storage storage.Storage, transformer transformer.Transformer, config *core.Configuration) *Proxy {
 	server := goproxy.NewProxyHttpServer()
 
 	proxy := &Proxy{
@@ -45,7 +45,12 @@ func NewProxy(storage *storage.Storage, transformer *transformer.Transformer, co
 	server.OnRequest(proxy.routeExists()).Do(proxy.TransformRequestBody())
 
 	// if vault exist and there were no route
+	// we add function here just to make request flow
+	// more clear. Request will be passed to the upstream
+	// even without following line
 	server.OnRequest().Do(proxy.HandleRequestAsUsual())
+
+	server.OnResponse().Do(proxy.TransformResponseBody())
 
 	server.Verbose = true
 

@@ -14,8 +14,6 @@ func (p *Proxy) NotFound(message string) goproxy.ReqHandler {
 
 func (p *Proxy) TransformRequestBody() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		ctx.Logf("Round found, transform data")
-
 		err := p.transformer.TransformRequestBody(ctxUserData(ctx).route.ID, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
@@ -28,5 +26,33 @@ func (p *Proxy) TransformRequestBody() goproxy.ReqHandler {
 func (p *Proxy) HandleRequestAsUsual() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		return req, nil
+	})
+}
+
+func (p *Proxy) HandleRequest(message string) goproxy.ReqHandler {
+	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		// check if vault exists
+		// check if route exists
+		// transform request body
+		// done
+		return req, nil
+	})
+}
+
+func (p *Proxy) TransformResponseBody() goproxy.RespHandler {
+	return goproxy.FuncRespHandler(func(res *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+		// no route for current request
+		if ctxUserData(ctx).route == nil {
+			return res
+		}
+
+		err := p.transformer.TransformResponseBody(ctxUserData(ctx).route.ID, res)
+		if err != nil {
+			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
+		}
+
+		// resp.StatusCode = http.StatusOK
+		// resp.Body = ioutil.NopCloser(bytes.NewBufferString("chico"))
+		return res
 	})
 }

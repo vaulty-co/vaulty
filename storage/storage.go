@@ -1,13 +1,10 @@
 package storage
 
-import "github.com/go-redis/redis"
+import (
+	"github.com/vaulty/proxy/model"
+)
 
-type Storage struct {
-	redisClient *redis.Client
-}
-
-func NewStorage(redisClient *redis.Client) *Storage {
-	return &Storage{
-		redisClient: redisClient,
-	}
+type Storage interface {
+	FindRoute(vaultID, type_, method, path string) (*model.Route, error)
+	FindVault(vaultID string) (*model.Vault, error)
 }

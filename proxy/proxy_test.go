@@ -1,111 +1,105 @@
 package proxy
 
 import (
-	"crypto/tls"
-	"fmt"
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-)
 
-var acceptAllCerts = &tls.Config{InsecureSkipVerify: true}
+	"github.com/vaulty/proxy/core"
+	"github.com/vaulty/proxy/storage/test_storage"
+	"github.com/vaulty/proxy/transformer/test_transformer"
+)
 
 type EchoHandler struct{}
 
 func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, readRequestBody(req))
+	io.WriteString(w, readBody(req.Body)+" response")
 }
 
 var upstream = httptest.NewServer(EchoHandler{})
 
-func setVaultUpstream(vaultID, upstream string) {
-	upstreamKey := fmt.Sprintf("vault:%s:upstream", vaultID)
-	redisClient.Set(upstreamKey, upstream, 0)
-}
+func TestInboundRoute(t *testing.T) {
+	st := test_storage.NewTestStorage()
+	tr := test_transformer.NewTransformer()
+	config := core.LoadConfig("../config/test.yml")
 
-func readRequestBody(req *http.Request) string {
-	request, err := ioutil.ReadAll(req.Body)
-	req.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return string(request)
-}
-
-func readResponseBody(res *http.Response) string {
-	response, err := ioutil.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return string(response)
-}
-
-func TestIboundRequestForwardedToUpstream(t *testing.T) {
-	setVaultUpstream("vlt123", upstream.URL)
-
-	proxy := httptest.NewServer(NewProxy().server)
+	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
 	defer proxy.Close()
 
-	req, _ := http.NewRequest(http.MethodPost, proxy.URL, nil)
-	req.Host = "vlt123.proxy.test"
+	test_storage.AddTestVault("vlt1", upstream.URL)
+	test_storage.AddTestRoute("vlt1", "inbound", http.MethodPost, "/tokenize", "rt1", upstream.URL)
+	defer test_storage.Reset()
 
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		t.Error(err)
-	}
+	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))
+		req.Host = "vlt1.proxy.test"
 
-	body := readResponseBody(res)
-	fmt.Println(body)
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
 
+		want := "request transformed response transformed"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
+
+	t.Run("Test request passes through to the vault's upstream when no route matches", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/pass", bytes.NewBufferString("request"))
+		req.Host = "vlt1.proxy.test"
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+
+		want := "request response"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
+
+	t.Run("Test request is rejected when no vault found", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/pass", bytes.NewBufferString("request"))
+		req.Host = "vltunknown.proxy.test"
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if res.StatusCode != 404 {
+			t.Errorf("Expected: %v, but got: %v", 404, res.StatusCode)
+		}
+
+		want := "Vault was not found"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
 }
 
-// func TestNoVaultForIboundRequestToUpstream(t *testing.T) {
-// 	proxy := httptest.NewServer(NewProxy().server)
-// 	defer proxy.Close()
+func readBody(body io.ReadCloser) string {
+	b, err := ioutil.ReadAll(body)
+	if err == nil {
+		return string(b)
+	}
 
-// 	req, _ := http.NewRequest("POST", proxy.URL, nil)
-// 	req.Host = "vlt123.proxy.test"
+	log.Fatal(err)
 
-// 	client := &http.Client{}
-// 	res, err := client.Do(req)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	body := readResponseBody(res)
-// 	fmt.Println(body)
-
-// }
-
-// func TestVaultNotFound(t *testing.T) {
-// 	client, ts := oneShotProxy(NewProxy())
-// 	defer ts.Close()
-
-// 	// client := &http.Client{}
-// 	req, _ := http.NewRequest("POST", ts.URL, nil)
-// 	req.Host = "bla.proxy.test"
-// 	res, err := client.Do(req)
-
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	if res.StatusCode != http.StatusNotFound {
-// 		t.Errorf("Received %d http status, want %d", res.StatusCode, http.StatusNotFound)
-// 	}
-
-// 	// greeting, err := ioutil.ReadAll(res.Body)
-// 	// res.Body.Close()
-// 	// if err != nil {
-// 	// 	log.Fatal(err)
-// 	// }
-
-// 	// fmt.Printf("%s", greeting)
-// }
+	return ""
+}

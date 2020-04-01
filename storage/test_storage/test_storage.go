@@ -1,4 +1,4 @@
-package storage
+package test_storage
 
 import (
 	"fmt"
@@ -6,12 +6,13 @@ import (
 	"net/url"
 
 	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/proxy/storage"
 )
 
 type TestStorage struct {
 }
 
-func NewTestStorage() Storage {
+func NewTestStorage() storage.Storage {
 	return &TestStorage{}
 }
 

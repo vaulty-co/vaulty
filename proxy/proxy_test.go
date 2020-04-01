@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/transformer"
+	"github.com/vaulty/proxy/storage/test_storage"
+	"github.com/vaulty/proxy/transformer/test_transformer"
 )
 
 type EchoHandler struct{}
@@ -23,16 +23,16 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 var upstream = httptest.NewServer(EchoHandler{})
 
 func TestInboundRoute(t *testing.T) {
-	st := storage.NewTestStorage()
-	tr := transformer.NewTestTransformer()
+	st := test_storage.NewTestStorage()
+	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 
 	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
 	defer proxy.Close()
 
-	storage.AddTestVault("vlt1", upstream.URL)
-	storage.AddTestRoute("vlt1", "inbound", http.MethodPost, "/tokenize", "rt1", upstream.URL)
-	defer storage.Reset()
+	test_storage.AddTestVault("vlt1", upstream.URL)
+	test_storage.AddTestRoute("vlt1", "inbound", http.MethodPost, "/tokenize", "rt1", upstream.URL)
+	defer test_storage.Reset()
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))

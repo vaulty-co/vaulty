@@ -1,4 +1,4 @@
-package transformer
+package test_transformer
 
 import (
 	"bufio"
@@ -6,16 +6,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/vaulty/proxy/transformer"
 )
 
-type TestTransformer struct {
+type Transformer struct {
 }
 
-func NewTestTransformer() Transformer {
-	return &TestTransformer{}
+func NewTransformer() transformer.Transformer {
+	return &Transformer{}
 }
 
-func (t *TestTransformer) TransformRequestBody(routeID string, req *http.Request) error {
+func (t *Transformer) TransformRequestBody(routeID string, req *http.Request) error {
 	log.Printf("Transforming request body for route: %s", routeID)
 
 	b, _ := ioutil.ReadAll(req.Body)
@@ -36,7 +38,7 @@ func (t *TestTransformer) TransformRequestBody(routeID string, req *http.Request
 	return nil
 }
 
-func (t *TestTransformer) TransformResponseBody(routeID string, res *http.Response) error {
+func (t *Transformer) TransformResponseBody(routeID string, res *http.Response) error {
 	if routeID == "rt1" {
 		b, _ := ioutil.ReadAll(res.Body)
 		body := string(b)

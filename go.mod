@@ -14,5 +14,6 @@ require (
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rainhq/rain v1.2.1
+	github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.2.8
 )

@@ -9,6 +9,8 @@ import (
 )
 
 func TestFindRoute(t *testing.T) {
+	assert := assert.New(t)
+
 	rs := NewRedisStorage(redisClient)
 
 	err := rs.CreateRoute(&model.Route{
@@ -19,29 +21,34 @@ func TestFindRoute(t *testing.T) {
 		VaultID:  "vlt1",
 		Upstream: "http://example.com",
 	})
-	assert.NoError(t, err)
+	assert.NoError(err)
 
-	t.Run("Finds route", func(t *testing.T) {
-		route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
+	route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
 
-		assert.NoError(t, err)
-		assert.Equal(t, route.ID, "rt1")
-	})
+	assert.NoError(err)
+	assert.Equal(route.ID, "rt1")
+
+	route, err = rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/nothing")
+	assert.NoError(err)
+	assert.Nil(route)
 }
 
 func TestFindVault(t *testing.T) {
+	assert := assert.New(t)
+
 	rs := NewRedisStorage(redisClient)
 
 	err := rs.CreateVault(&model.Vault{
 		ID:       "vlt1",
 		Upstream: "http://example.com",
 	})
-	assert.NoError(t, err)
+	assert.NoError(err)
 
-	t.Run("Finds vault", func(t *testing.T) {
-		route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
+	vault, err := rs.FindVault("vlt1")
+	assert.NoError(err)
+	assert.Equal(vault.ID, "vlt1")
 
-		assert.NoError(t, err)
-		assert.Equal(t, route.ID, "rt1")
-	})
+	vault, err = rs.FindVault("vlt0")
+	assert.NoError(err)
+	assert.Nil(vault)
 }

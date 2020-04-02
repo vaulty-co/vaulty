@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vaulty/proxy/core"
+	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage/test_storage"
 	"github.com/vaulty/proxy/transformer/test_transformer"
 )
@@ -23,6 +25,8 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 var upstream = httptest.NewServer(EchoHandler{})
 
 func TestInboundRoute(t *testing.T) {
+	defer test_storage.Reset()
+
 	st := test_storage.NewTestStorage()
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
@@ -31,8 +35,16 @@ func TestInboundRoute(t *testing.T) {
 	defer proxy.Close()
 
 	test_storage.AddTestVault("vlt1", upstream.URL)
-	test_storage.AddTestRoute("vlt1", "inbound", http.MethodPost, "/tokenize", "rt1", upstream.URL)
-	defer test_storage.Reset()
+
+	err := st.CreateRoute(&model.Route{
+		ID:       "rt1",
+		Type:     model.RouteInbound,
+		Method:   http.MethodPost,
+		Path:     "/tokenize",
+		VaultID:  "vlt1",
+		Upstream: upstream.URL,
+	})
+	assert.NoError(t, err)
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))

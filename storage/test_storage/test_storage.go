@@ -23,18 +23,18 @@ func AddTestVault(vaultID, upstream string) {
 	testVaults[vaultID] = &model.Vault{vaultID, newURL(upstream)}
 }
 
-func AddTestRoute(vaultID, type_, method, path, routeID, upstream string) {
-	routeKey := fmt.Sprintf("%s:%s:%s:%s", vaultID, type_, method, path)
-
-	testRoutes[routeKey] = &model.Route{routeID, newURL(upstream)}
-}
-
 func Reset() {
 	testRoutes = map[string]*model.Route{}
 	testVaults = map[string]*model.Vault{}
 }
 
-func (s *TestStorage) FindRoute(vaultID, type_, method, path string) (*model.Route, error) {
+func (s *TestStorage) CreateRoute(route *model.Route) error {
+	testRoutes[route.Key()] = route
+
+	return nil
+}
+
+func (s *TestStorage) FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error) {
 	routeKey := fmt.Sprintf("%s:%s:%s:%s", vaultID, type_, method, path)
 
 	route, ok := testRoutes[routeKey]

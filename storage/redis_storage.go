@@ -18,26 +18,27 @@ func NewRedisStorage(redisClient *redis.Client) Storage {
 	}
 }
 
-func (s *RedisStorage) FindRoute(vaultID, type_, method, path string) (*model.Route, error) {
-	// vlt2uYBrnYkUnEF:INBOUND:POST:/records => routeID
-	routeKey := fmt.Sprintf("%s:%s:%s:%s", vaultID, type_, method, path)
-	routeID := s.redisClient.Get(routeKey).Val()
-	if routeID == "" {
+func (s *RedisStorage) CreateRoute(route *model.Route) error {
+	err := s.redisClient.Set(route.Key(), route.ID, 0).Err()
+	return err
+}
+
+func (s *RedisStorage) FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error) {
+	route := &model.Route{
+		Type:    type_,
+		Method:  method,
+		Path:    path,
+		VaultID: vaultID,
+	}
+
+	route.ID = s.redisClient.Get(route.Key()).Val()
+	if route.ID == "" {
 		return nil, nil
 	}
 
-	upstreamKey := fmt.Sprintf("route:%s:upstream", routeID)
-	upstream := s.redisClient.Get(upstreamKey).Val()
-	upstreamURL, err := url.Parse(upstream)
-	if err != nil {
-		return nil, err
-	}
+	route.Upstream = s.redisClient.Get(route.UpstreamKey()).Val()
 
-	return &model.Route{
-		ID:          routeID,
-		UpstreamURL: upstreamURL,
-	}, nil
-
+	return route, nil
 }
 
 func (s *RedisStorage) FindVault(vaultID string) (*model.Vault, error) {

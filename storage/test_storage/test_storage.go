@@ -19,10 +19,6 @@ func NewTestStorage() storage.Storage {
 var testVaults map[string]*model.Vault = map[string]*model.Vault{}
 var testRoutes map[string]*model.Route = map[string]*model.Route{}
 
-func AddTestVault(vaultID, upstream string) {
-	testVaults[vaultID] = &model.Vault{vaultID, newURL(upstream)}
-}
-
 func Reset() {
 	testRoutes = map[string]*model.Route{}
 	testVaults = map[string]*model.Vault{}
@@ -30,6 +26,12 @@ func Reset() {
 
 func (s *TestStorage) CreateRoute(route *model.Route) error {
 	testRoutes[route.Key()] = route
+
+	return nil
+}
+
+func (s *TestStorage) CreateVault(vault *model.Vault) error {
+	testVaults[vault.ID] = vault
 
 	return nil
 }

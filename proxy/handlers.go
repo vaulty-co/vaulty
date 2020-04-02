@@ -29,9 +29,9 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
 		}
 
-		req.URL.Scheme = vault.UpstreamURL.Scheme
-		req.URL.User = vault.UpstreamURL.User
-		req.URL.Host = vault.UpstreamURL.Host
+		req.URL.Scheme = vault.UpstreamURL().Scheme
+		req.URL.User = vault.UpstreamURL().User
+		req.URL.Host = vault.UpstreamURL().Host
 
 		ctxUserData(ctx).vault = vault
 

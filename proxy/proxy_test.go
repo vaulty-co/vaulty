@@ -34,9 +34,13 @@ func TestInboundRoute(t *testing.T) {
 	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
 	defer proxy.Close()
 
-	test_storage.AddTestVault("vlt1", upstream.URL)
+	err := st.CreateVault(&model.Vault{
+		ID:       "vlt1",
+		Upstream: upstream.URL,
+	})
+	assert.NoError(t, err)
 
-	err := st.CreateRoute(&model.Route{
+	err = st.CreateRoute(&model.Route{
 		ID:       "rt1",
 		Type:     model.RouteInbound,
 		Method:   http.MethodPost,

@@ -17,8 +17,8 @@ func main() {
 	config := core.LoadConfig(fmt.Sprintf("config/%s.yml", *env))
 
 	redisClient := core.NewRedisClient(config)
-	storage := storage.NewStorage(redisClient)
-	transformer := transformer.NewTransformer(redisClient)
+	storage := storage.NewRedisStorage(redisClient)
+	transformer := transformer.NewSidekiqTransformer(redisClient)
 
 	proxy := proxy.NewProxy(storage, transformer, config)
 	proxy.Run(*port)

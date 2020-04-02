@@ -6,6 +6,7 @@ import (
 
 type Storage interface {
 	CreateRoute(*model.Route) error
+	CreateVault(*model.Vault) error
 	FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error)
 	FindVault(vaultID string) (*model.Vault, error)
 }

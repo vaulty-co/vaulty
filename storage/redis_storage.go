@@ -1,9 +1,6 @@
 package storage
 
 import (
-	"fmt"
-	"net/url"
-
 	"github.com/go-redis/redis"
 	"github.com/vaulty/proxy/model"
 )
@@ -20,6 +17,11 @@ func NewRedisStorage(redisClient *redis.Client) Storage {
 
 func (s *RedisStorage) CreateRoute(route *model.Route) error {
 	err := s.redisClient.Set(route.Key(), route.ID, 0).Err()
+	return err
+}
+
+func (s *RedisStorage) CreateVault(vault *model.Vault) error {
+	err := s.redisClient.Set(vault.UpstreamKey(), vault.Upstream, 0).Err()
 	return err
 }
 
@@ -42,19 +44,14 @@ func (s *RedisStorage) FindRoute(vaultID string, type_ model.RouteType, method, 
 }
 
 func (s *RedisStorage) FindVault(vaultID string) (*model.Vault, error) {
-	upstreamKey := fmt.Sprintf("vault:%s:upstream", vaultID)
-	upstream := s.redisClient.Get(upstreamKey).Val()
-	if upstream == "" {
+	vault := &model.Vault{
+		ID: vaultID,
+	}
+
+	vault.Upstream = s.redisClient.Get(vault.UpstreamKey()).Val()
+	if vault.Upstream == "" {
 		return nil, nil
 	}
 
-	upstreamURL, err := url.Parse(upstream)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.Vault{
-		ID:          vaultID,
-		UpstreamURL: upstreamURL,
-	}, nil
+	return vault, nil
 }

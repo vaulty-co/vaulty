@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/transformer"
 )
 
@@ -16,7 +17,7 @@ func NewTransformer() transformer.Transformer {
 	return &Transformer{}
 }
 
-func (t *Transformer) TransformRequestBody(routeID string, req *http.Request) error {
+func (t *Transformer) TransformRequestBody(route *model.Route, req *http.Request) error {
 	b, _ := ioutil.ReadAll(req.Body)
 	body := string(b)
 

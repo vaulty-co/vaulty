@@ -1,7 +1,6 @@
 package transformer
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -21,12 +20,7 @@ func TestMain(m *testing.M) {
 
 	redisClient = redis.NewClient(redisOptions)
 	redisClient.FlushAll()
-
 	exitCode := m.Run()
-
 	redisClient.FlushAll()
-
-	fmt.Println("after all tests")
 	os.Exit(exitCode)
-
 }

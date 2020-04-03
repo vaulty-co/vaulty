@@ -6,12 +6,14 @@ import (
 )
 
 type Route struct {
-	ID       string
-	Type     RouteType
-	Method   string
-	Path     string
-	VaultID  string
-	Upstream string
+	ID                          string
+	Type                        RouteType
+	Method                      string
+	Path                        string
+	VaultID                     string
+	Upstream                    string
+	RequestTransformationsJSON  string
+	ResponseTransformationsJSON string
 }
 
 type RouteType string
@@ -20,6 +22,10 @@ const (
 	RouteInbound   RouteType = "inbound"
 	RounteOutbound RouteType = "outbound"
 )
+
+func (r *Route) IDKey() string {
+	return fmt.Sprintf("vault:%s:route:%s", r.VaultID, r.ID)
+}
 
 // vlt2uYBrnYkUnEF:INBOUND:POST:/records => routeID
 func (r *Route) Key() string {

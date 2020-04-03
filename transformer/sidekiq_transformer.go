@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/vaulty/proxy/model"
 )
 
 type SidekiqTransformer struct {
@@ -26,8 +27,8 @@ func NewSidekiqTransformer(redisClient *redis.Client) Transformer {
 	}
 }
 
-func (t *SidekiqTransformer) TransformRequestBody(routeID string, httpRequest *http.Request) error {
-	request, err := newSerializableRequest(routeID, httpRequest)
+func (t *SidekiqTransformer) TransformRequestBody(route *model.Route, httpRequest *http.Request) error {
+	request, err := newSerializableRequest(route, httpRequest)
 	if err != nil {
 		return err
 	}
@@ -42,6 +43,10 @@ func (t *SidekiqTransformer) TransformRequestBody(routeID string, httpRequest *h
 	httpRequest.Body = body
 	httpRequest.ContentLength = size
 
+	return nil
+}
+
+func (t *SidekiqTransformer) TransformResponseBody(routeID string, httpResponse *http.Response) error {
 	return nil
 }
 
@@ -80,6 +85,8 @@ func (t *SidekiqTransformer) transform(workerClass string, payload interface{}) 
 	// Wait for task status
 	select {
 	case status := <-ch:
+		fmt.Println("status", status)
+
 		if status.Payload != "done" {
 			return nil, fmt.Errorf("Unexpected return from worker: %s", status.Payload)
 		}
@@ -99,8 +106,4 @@ func newBody(body []byte) (io.ReadCloser, int64) {
 	size := int64(len(body))
 
 	return ioutil.NopCloser(bodyReader), size
-}
-
-func (t *SidekiqTransformer) TransformResponseBody(routeID string, httpResponse *http.Response) error {
-	return nil
 }

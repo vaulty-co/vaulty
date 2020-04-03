@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/model"
 )
 
 func TestFindRoute(t *testing.T) {
-	assert := assert.New(t)
+	assert := require.New(t)
 
 	rs := NewRedisStorage(redisClient)
 
@@ -26,7 +27,10 @@ func TestFindRoute(t *testing.T) {
 	route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
 
 	assert.NoError(err)
+	assert.NotNil(route)
+
 	assert.Equal(route.ID, "rt1")
+	assert.Equal("http://example.com", route.Upstream)
 
 	route, err = rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/nothing")
 	assert.NoError(err)

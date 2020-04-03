@@ -49,7 +49,7 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 		ctxUserData(ctx).route = route
 
 		// transform request
-		err = p.transformer.TransformRequestBody(ctxUserData(ctx).route.ID, req)
+		err = p.transformer.TransformRequestBody(ctxUserData(ctx).route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}

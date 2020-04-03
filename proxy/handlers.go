@@ -86,7 +86,7 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 		}
 
 		// transform response
-		err := p.transformer.TransformResponseBody(ctxUserData(ctx).route.ID, res)
+		err := p.transformer.TransformResponseBody(ctxUserData(ctx).route, res)
 		if err != nil {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
 		}

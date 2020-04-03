@@ -32,7 +32,7 @@ func (t *Transformer) TransformRequestBody(route *model.Route, req *http.Request
 	return nil
 }
 
-func (t *Transformer) TransformResponseBody(routeID string, res *http.Response) error {
+func (t *Transformer) TransformResponseBody(route *model.Route, res *http.Response) error {
 	b, _ := ioutil.ReadAll(res.Body)
 	body := string(b)
 

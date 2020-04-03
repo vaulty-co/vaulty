@@ -8,5 +8,5 @@ import (
 
 type Transformer interface {
 	TransformRequestBody(route *model.Route, httpRequest *http.Request) error
-	TransformResponseBody(routeID string, httpResponse *http.Response) error
+	TransformResponseBody(route *model.Route, httpResponse *http.Response) error
 }

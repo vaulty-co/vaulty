@@ -46,7 +46,22 @@ func (t *SidekiqTransformer) TransformRequestBody(route *model.Route, httpReques
 	return nil
 }
 
-func (t *SidekiqTransformer) TransformResponseBody(routeID string, httpResponse *http.Response) error {
+func (t *SidekiqTransformer) TransformResponseBody(route *model.Route, httpResponse *http.Response) error {
+	response, err := newSerializableResponse(route, httpResponse)
+	if err != nil {
+		return err
+	}
+
+	result, err := t.transform("ProxyWorker::ResponseBodyTransformer", response)
+	if err != nil {
+		return err
+	}
+
+	body, size := newBody(result.Body)
+	httpResponse.Header.Del("Content-Length")
+	httpResponse.Body = body
+	httpResponse.ContentLength = size
+
 	return nil
 }
 

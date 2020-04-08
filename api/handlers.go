@@ -13,17 +13,17 @@ func (s *Server) HandleVaultCreate() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		vault := &model.Vault{
 			Upstream: in.Upstream,
 		}
 
-		// validate?
-
 		err = s.storage.CreateVault(vault)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		json.NewEncoder(w).Encode(vault)

@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/elazarl/goproxy"
@@ -42,6 +41,9 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	return proxy
 }
 
-func (p *Proxy) Run(port string) {
-	log.Fatal(http.ListenAndServe(":"+port, p.server))
+func (s *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.server.ServeHTTP(w, r)
 }
+
+// func (p *Proxy) Run(port string) {
+// }

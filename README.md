@@ -1,3 +1,20 @@
+# Vaulty
+
+## Commands
+
+Run proxy server on port 8080 (default):
+
+```vaulty proxy```
+
+Run API server on port 3000 (default):
+
+```vaulty api```
+
+```export VAULTY_ADDR='http://127.0.0.1:3000'```
+
+```vaulty status```
+
+
 # Example
 
 Create card.json with the following content:

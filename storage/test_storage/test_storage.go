@@ -39,6 +39,20 @@ func (s *TestStorage) CreateVault(vault *model.Vault) error {
 	return nil
 }
 
+func (s *TestStorage) ListVaults() ([]*model.Vault, error) {
+	vaults := []*model.Vault{}
+
+	for _, v := range testVaults {
+		vault := &model.Vault{}
+		vault.ID = v.ID
+		vault.Upstream = v.Upstream
+
+		vaults = append(vaults, vault)
+	}
+
+	return vaults, nil
+}
+
 func (s *TestStorage) FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error) {
 	routeKey := fmt.Sprintf("%s:%s:%s:%s", vaultID, type_, method, path)
 

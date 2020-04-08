@@ -2,17 +2,38 @@ package storage
 
 import (
 	"net/http"
+	"os"
 	"testing"
 
+	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/model"
 )
+
+var redisClient *redis.Client
+
+func TestMain(m *testing.M) {
+	core.LoadConfig("../config/test.yml")
+
+	redisOptions, err := redis.ParseURL(core.Config.Redis.URL)
+	if err != nil {
+		panic(err)
+	}
+
+	redisClient = redis.NewClient(redisOptions)
+	redisClient.FlushAll()
+	exitCode := m.Run()
+	redisClient.FlushAll()
+	os.Exit(exitCode)
+}
 
 func TestFindRoute(t *testing.T) {
 	assert := require.New(t)
 
 	rs := NewRedisStorage(redisClient)
+	defer redisClient.FlushAll()
 
 	err := rs.CreateRoute(&model.Route{
 		ID:       "rt1",
@@ -41,6 +62,7 @@ func TestFindVault(t *testing.T) {
 	assert := assert.New(t)
 
 	rs := NewRedisStorage(redisClient)
+	defer redisClient.FlushAll()
 
 	vault := &model.Vault{
 		Upstream: "http://example.com",
@@ -55,4 +77,19 @@ func TestFindVault(t *testing.T) {
 	vault, err = rs.FindVault("vlt0000")
 	assert.NoError(err)
 	assert.Nil(vault)
+}
+
+func TestListVaults(t *testing.T) {
+	rs := NewRedisStorage(redisClient)
+	defer redisClient.FlushAll()
+
+	vault := &model.Vault{
+		Upstream: "http://example.com",
+	}
+	err := rs.CreateVault(vault)
+	require.NoError(t, err)
+
+	vaults, err := rs.ListVaults()
+	require.NoError(t, err)
+	require.Equal(t, []*model.Vault{vault}, vaults)
 }

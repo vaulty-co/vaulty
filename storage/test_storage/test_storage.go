@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/rs/xid"
 	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage"
 )
@@ -31,6 +32,8 @@ func (s *TestStorage) CreateRoute(route *model.Route) error {
 }
 
 func (s *TestStorage) CreateVault(vault *model.Vault) error {
+	vault.ID = "vlt" + xid.New().String()
+
 	testVaults[vault.ID] = vault
 
 	return nil

@@ -42,17 +42,17 @@ func TestFindVault(t *testing.T) {
 
 	rs := NewRedisStorage(redisClient)
 
-	err := rs.CreateVault(&model.Vault{
-		ID:       "vlt1",
+	vault := &model.Vault{
 		Upstream: "http://example.com",
-	})
+	}
+	err := rs.CreateVault(vault)
+	assert.NoError(err)
+	assert.NotEmpty(vault.ID)
+
+	vault, err = rs.FindVault(vault.ID)
 	assert.NoError(err)
 
-	vault, err := rs.FindVault("vlt1")
-	assert.NoError(err)
-	assert.Equal(vault.ID, "vlt1")
-
-	vault, err = rs.FindVault("vlt0")
+	vault, err = rs.FindVault("vlt0000")
 	assert.NoError(err)
 	assert.Nil(vault)
 }

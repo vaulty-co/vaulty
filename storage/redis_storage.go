@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/go-redis/redis"
+	"github.com/rs/xid"
 	"github.com/vaulty/proxy/model"
 )
 
@@ -31,6 +32,8 @@ func (s *RedisStorage) CreateRoute(route *model.Route) error {
 }
 
 func (s *RedisStorage) CreateVault(vault *model.Vault) error {
+	vault.ID = "vlt" + xid.New().String()
+
 	err := s.redisClient.Set(vault.UpstreamKey(), vault.Upstream, 0).Err()
 	return err
 }

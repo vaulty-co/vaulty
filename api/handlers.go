@@ -29,3 +29,15 @@ func (s *Server) HandleVaultCreate() http.HandlerFunc {
 		json.NewEncoder(w).Encode(vault)
 	}
 }
+
+func (s *Server) HandleVaultList() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vaults, err := s.storage.ListVaults()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(vaults)
+	}
+}

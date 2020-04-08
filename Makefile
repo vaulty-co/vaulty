@@ -1,2 +1,8 @@
 build:
-	go build -i -o bin/proxy
+	rm -rf ./bin/*
+	go build -o bin ./...
+	mv ./bin/cmd ./bin/vaulty
+
+run:
+	go run ./cmd
+

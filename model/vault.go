@@ -3,15 +3,26 @@ package model
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/rs/xid"
 )
 
 type Vault struct {
-	ID          string
-	Upstream    string
-	upstreamURL *url.URL
+	ID          string   `json:"id"`
+	Upstream    string   `json:"upstream"`
+	upstreamURL *url.URL `json:"-"`
 }
 
 func NewVault(id, upstream string) *Vault {
+	return &Vault{
+		ID:       id,
+		Upstream: upstream,
+	}
+}
+
+func NewVaultWithID(upstream string) *Vault {
+	id := "vlt" + xid.New().String()
+
 	return &Vault{
 		ID:       id,
 		Upstream: upstream,

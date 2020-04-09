@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -54,7 +53,7 @@ func (s *Server) VaultCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "vault", vault)
+		ctx := request.WithVault(r.Context(), vault)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

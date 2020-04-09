@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -34,10 +35,11 @@ func TestInboundRoute(t *testing.T) {
 	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
 	defer proxy.Close()
 
-	err := st.CreateVault(&model.Vault{
+	vault := &model.Vault{
 		ID:       "vlt1",
 		Upstream: upstream.URL,
-	})
+	}
+	err := st.CreateVault(vault)
 	assert.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
@@ -45,14 +47,14 @@ func TestInboundRoute(t *testing.T) {
 		Type:     model.RouteInbound,
 		Method:   http.MethodPost,
 		Path:     "/tokenize",
-		VaultID:  "vlt1",
+		VaultID:  vault.ID,
 		Upstream: upstream.URL,
 	})
 	assert.NoError(t, err)
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))
-		req.Host = "vlt1.proxy.test"
+		req.Host = fmt.Sprintf("%s.proxy.test", vault.ID)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -69,8 +71,8 @@ func TestInboundRoute(t *testing.T) {
 	})
 
 	t.Run("Test request passes through to the vault's upstream when no route matches", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/pass", bytes.NewBufferString("request"))
-		req.Host = "vlt1.proxy.test"
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/noroute", bytes.NewBufferString("request"))
+		req.Host = fmt.Sprintf("%s.proxy.test", vault.ID)
 
 		client := &http.Client{}
 		res, err := client.Do(req)

@@ -75,8 +75,9 @@ func TestFindVault(t *testing.T) {
 	assert.NoError(err)
 
 	vault, err = rs.FindVault("vlt0000")
-	assert.NoError(err)
-	assert.Nil(vault)
+
+	require.Equal(t, ErrNoRows, err)
+	require.Nil(t, vault)
 }
 
 func TestListVaults(t *testing.T) {

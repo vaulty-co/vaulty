@@ -49,7 +49,7 @@ func (s *redisStorage) FindVault(vaultID string) (*model.Vault, error) {
 
 	vault.Upstream = s.redisClient.Get(vault.UpstreamKey()).Val()
 	if vault.Upstream == "" {
-		return nil, nil
+		return nil, ErrNoRows
 	}
 
 	return vault, nil

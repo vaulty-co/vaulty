@@ -1,6 +1,7 @@
 package test_storage
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -66,10 +67,14 @@ func (s *TestStorage) FindRoute(vaultID string, type_ model.RouteType, method, p
 }
 
 func (s *TestStorage) FindVault(vaultID string) (*model.Vault, error) {
+	if vaultID == "vltError" {
+		return nil, errors.New("Test error")
+	}
+
 	vault, ok := testVaults[vaultID]
 	if !ok {
 		// vault was not found
-		return nil, nil
+		return nil, storage.ErrNoRows
 	}
 
 	return vault, nil

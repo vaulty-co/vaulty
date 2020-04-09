@@ -22,10 +22,6 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 		vault, err := p.storage.FindVault(vaultID)
 		if err != nil {
 			ctx.Warnf(err.Error())
-			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
-		}
-
-		if vault == nil {
 			return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
 		}
 

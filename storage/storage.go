@@ -1,8 +1,14 @@
 package storage
 
 import (
+	"errors"
+
 	"github.com/go-redis/redis"
 	"github.com/vaulty/proxy/model"
+)
+
+var (
+	ErrNoRows = errors.New("no rows found")
 )
 
 type Storage interface {

@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
 )
 
@@ -43,8 +45,8 @@ func (s *Server) HandleVaultList() http.HandlerFunc {
 	}
 }
 
-func (s *Server) HandleVaultFind() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) VaultCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vaultID := chi.URLParam(r, "vaultID")
 		vault, err := s.storage.FindVault(vaultID)
 		if err != nil {
@@ -52,6 +54,28 @@ func (s *Server) HandleVaultFind() http.HandlerFunc {
 			return
 		}
 
+		ctx := context.WithValue(r.Context(), "vault", vault)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (s *Server) HandleVaultFind() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vault, _ := request.VaultFrom(r.Context())
+
 		json.NewEncoder(w).Encode(vault)
+	}
+}
+
+func (s *Server) HandleVaultDelete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vault, _ := request.VaultFrom(r.Context())
+		err := s.storage.DeleteVault(vault.ID)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

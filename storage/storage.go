@@ -12,11 +12,15 @@ var (
 )
 
 type Storage interface {
-	CreateRoute(*model.Route) error
+	// Vault
 	CreateVault(*model.Vault) error
-	ListVaults() ([]*model.Vault, error)
-	FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error)
 	FindVault(vaultID string) (*model.Vault, error)
+	ListVaults() ([]*model.Vault, error)
+	DeleteVault(vaultID string) error
+
+	// Route
+	CreateRoute(*model.Route) error
+	FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error)
 }
 
 type redisStorage struct {

@@ -54,3 +54,11 @@ func (s *redisStorage) FindVault(vaultID string) (*model.Vault, error) {
 
 	return vault, nil
 }
+
+func (s *redisStorage) DeleteVault(vaultID string) error {
+	vault := &model.Vault{
+		ID: vaultID,
+	}
+
+	return s.redisClient.Del(vault.UpstreamKey()).Err()
+}

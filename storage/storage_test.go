@@ -94,3 +94,21 @@ func TestListVaults(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []*model.Vault{vault}, vaults)
 }
+
+func TestDeleteVault(t *testing.T) {
+	rs := NewRedisStorage(redisClient)
+	defer redisClient.FlushAll()
+
+	vault := &model.Vault{
+		Upstream: "http://example.com",
+	}
+	err := rs.CreateVault(vault)
+	require.NoError(t, err)
+
+	err = rs.DeleteVault(vault.ID)
+	require.NoError(t, err)
+
+	vault, err = rs.FindVault(vault.ID)
+	require.Equal(t, ErrNoRows, err)
+	require.Nil(t, vault)
+}

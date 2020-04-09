@@ -80,6 +80,12 @@ func (s *TestStorage) FindVault(vaultID string) (*model.Vault, error) {
 	return vault, nil
 }
 
+func (s *TestStorage) DeleteVault(vaultID string) error {
+	delete(testVaults, vaultID)
+
+	return nil
+}
+
 func newURL(u string) *url.URL {
 	res, err := url.Parse(u)
 	if err != nil {

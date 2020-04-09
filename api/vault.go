@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/vaulty/proxy/model"
 )
 
@@ -39,5 +40,18 @@ func (s *Server) HandleVaultList() http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(vaults)
+	}
+}
+
+func (s *Server) HandleVaultFind() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vaultID := chi.URLParam(r, "vaultID")
+		vault, err := s.storage.FindVault(vaultID)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		json.NewEncoder(w).Encode(vault)
 	}
 }

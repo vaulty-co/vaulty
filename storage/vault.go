@@ -60,5 +60,10 @@ func (s *redisStorage) DeleteVault(vaultID string) error {
 		ID: vaultID,
 	}
 
+	err := s.redisClient.LRem("vaults", 1, vault.ID).Err()
+	if err != nil {
+		return err
+	}
+
 	return s.redisClient.Del(vault.UpstreamKey()).Err()
 }

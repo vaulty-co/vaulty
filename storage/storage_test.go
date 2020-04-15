@@ -111,4 +111,9 @@ func TestDeleteVault(t *testing.T) {
 	vault, err = rs.FindVault(vault.ID)
 	require.Equal(t, ErrNoRows, err)
 	require.Nil(t, vault)
+
+	vaults, err := rs.ListVaults()
+	require.NoError(t, err)
+	require.Len(t, vaults, 0)
+
 }

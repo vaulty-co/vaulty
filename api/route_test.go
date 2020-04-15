@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/proxy/storage"
 	"github.com/vaulty/proxy/storage/test_storage"
 )
 
@@ -132,25 +133,6 @@ func TestWithRoute(t *testing.T) {
 	err = st.CreateRoute(route)
 	require.NoError(t, err)
 
-	t.Run("Find route", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest("GET", "/", nil)
-
-		ctx := r.Context()
-		ctx = request.WithVault(ctx, vault)
-		ctx = request.WithRoute(ctx, route)
-
-		r = r.WithContext(ctx)
-
-		server.HandleRouteFind()(w, r)
-
-		require.Equal(t, 200, w.Code)
-
-		out := &model.Route{}
-		json.NewDecoder(w.Body).Decode(out)
-		require.Equal(t, route.ID, out.ID)
-	})
-
 	t.Run("List routes", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
@@ -172,8 +154,45 @@ func TestWithRoute(t *testing.T) {
 		json.NewDecoder(w.Body).Decode(&got)
 
 		require.Equal(t, want, got)
-
 	})
-	t.Run("Update route", func(t *testing.T) {})
-	t.Run("Delete route", func(t *testing.T) {})
+
+	t.Run("Find route", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", nil)
+
+		ctx := r.Context()
+		ctx = request.WithVault(ctx, vault)
+		ctx = request.WithRoute(ctx, route)
+
+		r = r.WithContext(ctx)
+
+		server.HandleRouteFind()(w, r)
+
+		require.Equal(t, 200, w.Code)
+
+		out := &model.Route{}
+		json.NewDecoder(w.Body).Decode(out)
+		require.Equal(t, route.ID, out.ID)
+		require.Equal(t, route.Type, out.Type)
+		require.Equal(t, route.Method, out.Method)
+		require.Equal(t, route.Path, out.Path)
+	})
+
+	t.Run("Delete route", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("DELETE", "/", nil)
+
+		ctx := r.Context()
+		ctx = request.WithVault(ctx, vault)
+		ctx = request.WithRoute(ctx, route)
+
+		r = r.WithContext(ctx)
+
+		server.HandleRouteDelete()(w, r)
+
+		require.Equal(t, 204, w.Code)
+
+		_, err := st.FindRouteByID(route.VaultID, route.ID)
+		require.Equal(t, storage.ErrNoRows, err)
+	})
 }

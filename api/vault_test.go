@@ -163,6 +163,7 @@ func TestHandleVaultDelete(t *testing.T) {
 	err := st.CreateVault(vault)
 	require.Nil(t, err)
 
+	// todo all routes
 	t.Run("Deletes vault", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("DELETE", "/", nil)

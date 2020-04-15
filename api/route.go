@@ -67,3 +67,16 @@ func (s *Server) HandleRouteFind() http.HandlerFunc {
 		json.NewEncoder(w).Encode(route)
 	}
 }
+
+func (s *Server) HandleRouteDelete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		route := request.RouteFrom(r.Context())
+		err := s.storage.DeleteRoute(route.VaultID, route.ID)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}

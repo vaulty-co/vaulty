@@ -19,8 +19,8 @@ type Route struct {
 type RouteType string
 
 const (
-	RouteInbound   RouteType = "inbound"
-	RounteOutbound RouteType = "outbound"
+	RouteInbound  RouteType = "inbound"
+	RouteOutbound RouteType = "outbound"
 )
 
 func (r *Route) IDKey() string {
@@ -29,6 +29,10 @@ func (r *Route) IDKey() string {
 
 // vlt2uYBrnYkUnEF:INBOUND:POST:/records => routeID
 func (r *Route) Key() string {
+	return fmt.Sprintf("%s:%s:%s:%s", r.VaultID, r.Type, r.Method, r.Path)
+}
+
+func (r *Route) RequestKey() string {
 	return fmt.Sprintf("%s:%s:%s:%s", r.VaultID, r.Type, r.Method, r.Path)
 }
 
@@ -43,4 +47,14 @@ func (r *Route) UpstreamURL() *url.URL {
 	// we use it
 
 	return u
+}
+
+func (rt RouteType) MarshalBinary() ([]byte, error) {
+	return []byte(rt), nil
+}
+
+func (rt RouteType) UnmarshalBinary(b []byte) error {
+	rt = RouteType(b)
+
+	return nil
 }

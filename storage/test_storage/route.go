@@ -55,3 +55,14 @@ func (s *TestStorage) ListRoutes(vaultID string) ([]*model.Route, error) {
 
 	return routes, nil
 }
+
+func (s *TestStorage) DeleteRoute(vaultID, routeID string) error {
+	route, err := s.FindRouteByID(vaultID, routeID)
+	if err != nil {
+		return err
+	}
+
+	delete(testRoutes, route.Key())
+	delete(testVaultRoutesIDs, vaultRouteKey{vaultID: route.VaultID, routeID: route.ID})
+	return nil
+}

@@ -1,10 +1,13 @@
 package storage
 
 import (
+	"github.com/rs/xid"
 	"github.com/vaulty/proxy/model"
 )
 
 func (s *redisStorage) CreateRoute(route *model.Route) error {
+	route.ID = "rt" + xid.New().String()
+
 	err := s.redisClient.Set(route.Key(), route.ID, 0).Err()
 	if err != nil {
 		return err

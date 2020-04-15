@@ -27,6 +27,8 @@ func Reset() {
 }
 
 func (s *TestStorage) CreateRoute(route *model.Route) error {
+	route.ID = "rt" + xid.New().String()
+
 	testRoutes[route.Key()] = route
 
 	return nil

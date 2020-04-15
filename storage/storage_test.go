@@ -36,7 +36,6 @@ func TestFindRoute(t *testing.T) {
 	defer redisClient.FlushAll()
 
 	err := rs.CreateRoute(&model.Route{
-		ID:       "rt1",
 		Type:     model.RouteInbound,
 		Method:   http.MethodPost,
 		Path:     "/tokenize",
@@ -46,16 +45,14 @@ func TestFindRoute(t *testing.T) {
 	assert.NoError(err)
 
 	route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
-
 	assert.NoError(err)
 	assert.NotNil(route)
 
-	assert.Equal(route.ID, "rt1")
+	assert.NotEmpty(route.ID)
 	assert.Equal("http://example.com", route.Upstream)
 
 	route, err = rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/nothing")
-	assert.NoError(err)
-	assert.Nil(route)
+	assert.Error(ErrNoRows, err)
 }
 
 func TestFindVault(t *testing.T) {

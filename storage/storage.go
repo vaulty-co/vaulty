@@ -22,6 +22,8 @@ type Storage interface {
 	// Route
 	CreateRoute(*model.Route) error
 	FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error)
+	FindRouteByID(vaultID, routeID string) (*model.Route, error)
+	ListRoutes(vaultID string) ([]*model.Route, error)
 }
 
 type redisStorage struct {

@@ -16,6 +16,7 @@ func (s *Server) routes() http.Handler {
 		r.Route("/{vaultID}", func(r chi.Router) {
 			r.Use(s.VaultCtx)
 			r.Get("/", s.HandleVaultFind())
+			r.Put("/", s.HandleVaultUpdate())
 			r.Delete("/", s.HandleVaultDelete())
 		})
 	})

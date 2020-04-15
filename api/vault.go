@@ -9,6 +9,10 @@ import (
 	"github.com/vaulty/proxy/model"
 )
 
+type vaultInput struct {
+	Upstream string `json:"upstream"`
+}
+
 func (s *Server) HandleVaultCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		in := &model.Vault{}
@@ -76,5 +80,28 @@ func (s *Server) HandleVaultDelete() http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (s *Server) HandleVaultUpdate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vault := request.VaultFrom(r.Context())
+
+		in := &vaultInput{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		vault.Upstream = in.Upstream
+
+		err = s.storage.UpdateVault(vault)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(vault)
 	}
 }

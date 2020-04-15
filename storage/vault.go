@@ -55,6 +55,15 @@ func (s *redisStorage) FindVault(vaultID string) (*model.Vault, error) {
 	return vault, nil
 }
 
+func (s *redisStorage) UpdateVault(vault *model.Vault) error {
+	err := s.redisClient.Set(vault.UpstreamKey(), vault.Upstream, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *redisStorage) DeleteVault(vaultID string) error {
 	vault := &model.Vault{
 		ID: vaultID,

@@ -17,6 +17,7 @@ type Storage interface {
 	FindVault(vaultID string) (*model.Vault, error)
 	ListVaults() ([]*model.Vault, error)
 	DeleteVault(vaultID string) error
+	UpdateVault(*model.Vault) error
 
 	// Route
 	CreateRoute(*model.Route) error

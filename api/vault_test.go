@@ -126,6 +126,34 @@ func TestHandleVaultFind(t *testing.T) {
 	})
 }
 
+func TestHandleVaultUpdate(t *testing.T) {
+	st := test_storage.NewTestStorage()
+	server := NewServer(st)
+	defer test_storage.Reset()
+
+	vault := &model.Vault{Upstream: "https://example.com"}
+	err := st.CreateVault(vault)
+	require.Nil(t, err)
+
+	t.Run("Updates vault", func(t *testing.T) {
+		in := new(bytes.Buffer)
+		json.NewEncoder(in).Encode(&vaultInput{Upstream: "https://newdomain.com"})
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("PUT", "/", in)
+		r = r.WithContext(request.WithVault(r.Context(), vault))
+
+		server.HandleVaultUpdate()(w, r)
+
+		require.Equal(t, 200, w.Code)
+
+		out := &model.Vault{}
+		json.NewDecoder(w.Body).Decode(out)
+		require.NotEmpty(t, out.ID)
+		require.Equal(t, "https://newdomain.com", out.Upstream)
+	})
+}
+
 func TestHandleVaultDelete(t *testing.T) {
 	st := test_storage.NewTestStorage()
 	server := NewServer(st)

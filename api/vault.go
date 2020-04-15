@@ -60,7 +60,7 @@ func (s *Server) VaultCtx(next http.Handler) http.Handler {
 
 func (s *Server) HandleVaultFind() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vault, _ := request.VaultFrom(r.Context())
+		vault := request.VaultFrom(r.Context())
 
 		json.NewEncoder(w).Encode(vault)
 	}
@@ -68,7 +68,7 @@ func (s *Server) HandleVaultFind() http.HandlerFunc {
 
 func (s *Server) HandleVaultDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vault, _ := request.VaultFrom(r.Context())
+		vault := request.VaultFrom(r.Context())
 		err := s.storage.DeleteVault(vault.ID)
 		if err != nil {
 			http.NotFound(w, r)

@@ -17,7 +17,11 @@ func WithVault(parent context.Context, vault *model.Vault) context.Context {
 	return context.WithValue(parent, vaultKey, vault)
 }
 
-func VaultFrom(ctx context.Context) (*model.Vault, bool) {
+func VaultFrom(ctx context.Context) *model.Vault {
 	vault, ok := ctx.Value(vaultKey).(*model.Vault)
-	return vault, ok
+	if !ok {
+		return nil
+	}
+
+	return vault
 }

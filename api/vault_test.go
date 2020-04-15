@@ -78,7 +78,7 @@ func TestVaultCtx(t *testing.T) {
 		r = r.WithContext(context.WithValue(request.WithVault(r.Context(), vault), chi.RouteCtxKey, routeCtx))
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			require.Equal(t, vault, r.Context().Value("vault").(*model.Vault))
+			require.Equal(t, vault, request.VaultFrom(r.Context()))
 		})
 
 		server.VaultCtx(testHandler).ServeHTTP(w, r)

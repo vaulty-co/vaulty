@@ -35,31 +35,6 @@ func TestHandleVaultCreate(t *testing.T) {
 	require.Equal(t, "https://example.com", out.Upstream)
 }
 
-func TestHandleVaultList(t *testing.T) {
-	st := test_storage.NewTestStorage()
-	server := NewServer(st)
-	defer test_storage.Reset()
-
-	vault := &model.Vault{Upstream: "https://example.com"}
-	err := st.CreateVault(vault)
-	require.Nil(t, err)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
-
-	server.HandleVaultList()(w, r)
-	require.Equal(t, 200, w.Code)
-
-	want := []*model.Vault{
-		vault,
-	}
-
-	got := []*model.Vault{}
-	json.NewDecoder(w.Body).Decode(&got)
-
-	require.Equal(t, want, got)
-}
-
 func TestVaultCtx(t *testing.T) {
 	st := test_storage.NewTestStorage()
 	server := NewServer(st)
@@ -69,7 +44,7 @@ func TestVaultCtx(t *testing.T) {
 	err := st.CreateVault(vault)
 	require.Nil(t, err)
 
-	t.Run("Test vault is set into the request context", func(t *testing.T) {
+	t.Run("VaultCtx sets vault to the request context", func(t *testing.T) {
 		routeCtx := new(chi.Context)
 		routeCtx.URLParams.Add("vaultID", vault.ID)
 
@@ -84,7 +59,7 @@ func TestVaultCtx(t *testing.T) {
 		server.VaultCtx(testHandler).ServeHTTP(w, r)
 	})
 
-	t.Run("Test vault not found", func(t *testing.T) {
+	t.Run("VaultCtx returns 404 when vault not found", func(t *testing.T) {
 		c := new(chi.Context)
 		c.URLParams.Add("vaultID", "xxx")
 
@@ -102,7 +77,7 @@ func TestVaultCtx(t *testing.T) {
 	})
 }
 
-func TestHandleVaultFind(t *testing.T) {
+func TestWithVault(t *testing.T) {
 	st := test_storage.NewTestStorage()
 	server := NewServer(st)
 	defer test_storage.Reset()
@@ -111,7 +86,7 @@ func TestHandleVaultFind(t *testing.T) {
 	err := st.CreateVault(vault)
 	require.Nil(t, err)
 
-	t.Run("Returns vault", func(t *testing.T) {
+	t.Run("HandleVaultFind", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
 		r = r.WithContext(request.WithVault(r.Context(), vault))
@@ -124,18 +99,25 @@ func TestHandleVaultFind(t *testing.T) {
 		json.NewDecoder(w.Body).Decode(out)
 		require.Equal(t, vault.ID, out.ID)
 	})
-}
 
-func TestHandleVaultUpdate(t *testing.T) {
-	st := test_storage.NewTestStorage()
-	server := NewServer(st)
-	defer test_storage.Reset()
+	t.Run("HandleVaultList", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", nil)
 
-	vault := &model.Vault{Upstream: "https://example.com"}
-	err := st.CreateVault(vault)
-	require.Nil(t, err)
+		server.HandleVaultList()(w, r)
+		require.Equal(t, 200, w.Code)
 
-	t.Run("Updates vault", func(t *testing.T) {
+		want := []*model.Vault{
+			vault,
+		}
+
+		got := []*model.Vault{}
+		json.NewDecoder(w.Body).Decode(&got)
+
+		require.Equal(t, want, got)
+	})
+
+	t.Run("HandleVaultUpdate", func(t *testing.T) {
 		in := new(bytes.Buffer)
 		json.NewEncoder(in).Encode(&vaultInput{Upstream: "https://newdomain.com"})
 
@@ -152,19 +134,8 @@ func TestHandleVaultUpdate(t *testing.T) {
 		require.NotEmpty(t, out.ID)
 		require.Equal(t, "https://newdomain.com", out.Upstream)
 	})
-}
 
-func TestHandleVaultDelete(t *testing.T) {
-	st := test_storage.NewTestStorage()
-	server := NewServer(st)
-	defer test_storage.Reset()
-
-	vault := &model.Vault{Upstream: "https://example.com"}
-	err := st.CreateVault(vault)
-	require.Nil(t, err)
-
-	// todo all routes
-	t.Run("Deletes vault", func(t *testing.T) {
+	t.Run("HandleVaultDelete", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("DELETE", "/", nil)
 		r = r.WithContext(request.WithVault(r.Context(), vault))

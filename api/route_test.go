@@ -71,7 +71,7 @@ func TestRouteCtx(t *testing.T) {
 	err = st.CreateRoute(route)
 	require.NoError(t, err)
 
-	t.Run("Test route is set into the request context", func(t *testing.T) {
+	t.Run("RouteCtx sets route to the request context", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
 
@@ -91,7 +91,7 @@ func TestRouteCtx(t *testing.T) {
 		server.RouteCtx(testHandler).ServeHTTP(w, r)
 	})
 
-	t.Run("Test route not found", func(t *testing.T) {
+	t.Run("RouteCtx returns 404 when route not found", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
 
@@ -133,7 +133,7 @@ func TestWithRoute(t *testing.T) {
 	err = st.CreateRoute(route)
 	require.NoError(t, err)
 
-	t.Run("List routes", func(t *testing.T) {
+	t.Run("HandleRouteList", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
 
@@ -156,7 +156,7 @@ func TestWithRoute(t *testing.T) {
 		require.Equal(t, want, got)
 	})
 
-	t.Run("Find route", func(t *testing.T) {
+	t.Run("HandleRouteFind", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/", nil)
 
@@ -178,7 +178,7 @@ func TestWithRoute(t *testing.T) {
 		require.Equal(t, route.Path, out.Path)
 	})
 
-	t.Run("Delete route", func(t *testing.T) {
+	t.Run("HandleRouteDelete", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("DELETE", "/", nil)
 

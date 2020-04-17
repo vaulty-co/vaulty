@@ -8,61 +8,45 @@ import (
 	"github.com/vaulty/proxy/model"
 )
 
-func TestFindVault(t *testing.T) {
+func TestWithVault(t *testing.T) {
 	assert := assert.New(t)
 
 	rs := NewRedisStorage(redisClient)
 	defer redisClient.FlushAll()
 
-	vault := &model.Vault{
+	createdVault := &model.Vault{
 		Upstream: "http://example.com",
 	}
-	err := rs.CreateVault(vault)
+	err := rs.CreateVault(createdVault)
 	assert.NoError(err)
-	assert.NotEmpty(vault.ID)
+	assert.NotEmpty(createdVault.ID)
 
-	vault, err = rs.FindVault(vault.ID)
-	assert.NoError(err)
+	t.Run("FindVault", func(t *testing.T) {
+		vault, err := rs.FindVault(createdVault.ID)
+		assert.NoError(err)
 
-	vault, err = rs.FindVault("vlt0000")
+		vault, err = rs.FindVault("vlt0000")
 
-	require.Equal(t, ErrNoRows, err)
-	require.Nil(t, vault)
-}
+		require.Equal(t, ErrNoRows, err)
+		require.Nil(t, vault)
+	})
 
-func TestListVaults(t *testing.T) {
-	rs := NewRedisStorage(redisClient)
-	defer redisClient.FlushAll()
+	t.Run("ListVaults", func(t *testing.T) {
+		vaults, err := rs.ListVaults()
+		require.NoError(t, err)
+		require.Equal(t, []*model.Vault{createdVault}, vaults)
+	})
 
-	vault := &model.Vault{
-		Upstream: "http://example.com",
-	}
-	err := rs.CreateVault(vault)
-	require.NoError(t, err)
+	t.Run("DeleteVault", func(t *testing.T) {
+		err := rs.DeleteVault(createdVault.ID)
+		require.NoError(t, err)
 
-	vaults, err := rs.ListVaults()
-	require.NoError(t, err)
-	require.Equal(t, []*model.Vault{vault}, vaults)
-}
+		vault, err := rs.FindVault(createdVault.ID)
+		require.Equal(t, ErrNoRows, err)
+		require.Nil(t, vault)
 
-func TestDeleteVault(t *testing.T) {
-	rs := NewRedisStorage(redisClient)
-	defer redisClient.FlushAll()
-
-	vault := &model.Vault{
-		Upstream: "http://example.com",
-	}
-	err := rs.CreateVault(vault)
-	require.NoError(t, err)
-
-	err = rs.DeleteVault(vault.ID)
-	require.NoError(t, err)
-
-	vault, err = rs.FindVault(vault.ID)
-	require.Equal(t, ErrNoRows, err)
-	require.Nil(t, vault)
-
-	vaults, err := rs.ListVaults()
-	require.NoError(t, err)
-	require.Len(t, vaults, 0)
+		vaults, err := rs.ListVaults()
+		require.NoError(t, err)
+		require.Len(t, vaults, 0)
+	})
 }

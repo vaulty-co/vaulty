@@ -66,3 +66,17 @@ func (s *TestStorage) DeleteRoute(vaultID, routeID string) error {
 	delete(testVaultRoutesIDs, vaultRouteKey{vaultID: route.VaultID, routeID: route.ID})
 	return nil
 }
+
+func (s *TestStorage) DeleteRoutes(vaultID string) error {
+	for key, route := range testVaultRoutesIDs {
+		if route.VaultID != vaultID {
+			continue
+		}
+
+		delete(testRoutes, route.Key())
+		delete(testVaultRoutesIDs, key)
+
+	}
+
+	return nil
+}

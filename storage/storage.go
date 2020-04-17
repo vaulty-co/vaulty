@@ -25,6 +25,7 @@ type Storage interface {
 	FindRouteByID(vaultID, routeID string) (*model.Route, error)
 	ListRoutes(vaultID string) ([]*model.Route, error)
 	DeleteRoute(vaultID, routeID string) error
+	DeleteRoutes(vaultID string) error
 }
 
 type redisStorage struct {

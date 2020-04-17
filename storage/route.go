@@ -130,3 +130,19 @@ func (s *redisStorage) DeleteRoute(vaultID, routeID string) error {
 
 	return err
 }
+
+func (s *redisStorage) DeleteRoutes(vaultID string) error {
+	routes, err := s.ListRoutes(vaultID)
+	if err != nil {
+		return err
+	}
+
+	for _, route := range routes {
+		err = s.DeleteRoute(vaultID, route.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

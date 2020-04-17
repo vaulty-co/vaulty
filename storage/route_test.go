@@ -41,6 +41,12 @@ func TestWithRoute(t *testing.T) {
 		require.Equal(t, ErrNoRows, err)
 	})
 
+	t.Run("ListRoutes", func(t *testing.T) {
+		routes, err := rs.ListRoutes("vlt1")
+		require.NoError(t, err)
+		require.Len(t, routes, 1)
+	})
+
 	t.Run("DeleteRoute", func(t *testing.T) {
 		err = rs.DeleteRoute(createdRoute.VaultID, createdRoute.ID)
 		require.NoError(t, err)
@@ -49,6 +55,30 @@ func TestWithRoute(t *testing.T) {
 		require.Equal(t, ErrNoRows, err)
 
 		routes, err := rs.ListRoutes(createdRoute.VaultID)
+		require.NoError(t, err)
+		require.Len(t, routes, 0)
+	})
+
+	t.Run("DeleteRoutes", func(t *testing.T) {
+		for i := 1; i <= 2; i++ {
+			err := rs.CreateRoute(&model.Route{
+				Type:     model.RouteInbound,
+				Method:   http.MethodPost,
+				Path:     "/tokenize" + string(i),
+				VaultID:  "vlt1",
+				Upstream: "http://example.com",
+			})
+			require.NoError(t, err)
+		}
+
+		routes, err := rs.ListRoutes("vlt1")
+		require.NoError(t, err)
+		require.Len(t, routes, 2)
+
+		err = rs.DeleteRoutes("vlt1")
+		require.NoError(t, err)
+
+		routes, err = rs.ListRoutes("vlt1")
 		require.NoError(t, err)
 		require.Len(t, routes, 0)
 	})

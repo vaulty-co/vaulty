@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,17 @@ func TestWithVault(t *testing.T) {
 	})
 
 	t.Run("DeleteVault", func(t *testing.T) {
-		err := rs.DeleteVault(createdVault.ID)
+		route := &model.Route{
+			Type:     model.RouteInbound,
+			Method:   http.MethodPost,
+			Path:     "/tokenize",
+			VaultID:  createdVault.ID,
+			Upstream: "http://example.com",
+		}
+		err := rs.CreateRoute(route)
+		require.NoError(t, err)
+
+		err = rs.DeleteVault(createdVault.ID)
 		require.NoError(t, err)
 
 		vault, err := rs.FindVault(createdVault.ID)
@@ -48,5 +59,10 @@ func TestWithVault(t *testing.T) {
 		vaults, err := rs.ListVaults()
 		require.NoError(t, err)
 		require.Len(t, vaults, 0)
+
+		// deletes its routes as well
+		routes, err := rs.ListRoutes(createdVault.ID)
+		require.NoError(t, err)
+		require.Len(t, routes, 0)
 	})
 }

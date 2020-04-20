@@ -1,19 +1,20 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 )
 
 type Route struct {
-	ID                          string
-	Type                        RouteType
-	Method                      string
-	Path                        string
-	VaultID                     string
-	Upstream                    string
-	RequestTransformationsJSON  string
-	ResponseTransformationsJSON string
+	ID                          string          `json:"id"`
+	Type                        RouteType       `json:"type"`
+	Method                      string          `json:"method"`
+	Path                        string          `json:"path"`
+	VaultID                     string          `json:"vault_id"`
+	Upstream                    string          `json:"upstream"`
+	RequestTransformationsJSON  json.RawMessage `json:"request_transformations"`
+	ResponseTransformationsJSON json.RawMessage `json:"response_transformations"`
 }
 
 type RouteType string

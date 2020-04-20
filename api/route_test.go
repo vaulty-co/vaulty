@@ -124,11 +124,13 @@ func TestWithRoute(t *testing.T) {
 	require.NoError(t, err)
 
 	route := &model.Route{
-		Type:     model.RouteInbound,
-		Method:   http.MethodPost,
-		Path:     "/tokenize",
-		Upstream: "https://example.com",
-		VaultID:  vault.ID,
+		Type:                        model.RouteInbound,
+		Method:                      http.MethodPost,
+		Path:                        "/tokenize",
+		Upstream:                    "https://example.com",
+		VaultID:                     vault.ID,
+		RequestTransformationsJSON:  json.RawMessage("null"),
+		ResponseTransformationsJSON: json.RawMessage("null"),
 	}
 	err = st.CreateRoute(route)
 	require.NoError(t, err)

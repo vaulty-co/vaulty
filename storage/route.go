@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/rs/xid"
@@ -15,8 +16,8 @@ func (s *redisStorage) CreateRoute(route *model.Route) error {
 		"method":                   route.Method,
 		"path":                     route.Path,
 		"upstream":                 route.Upstream,
-		"request_transformations":  route.RequestTransformationsJSON,
-		"response_transformations": route.ResponseTransformationsJSON,
+		"request_transformations":  []byte(route.RequestTransformationsJSON),
+		"response_transformations": []byte(route.ResponseTransformationsJSON),
 	}).Err()
 	if err != nil {
 		return err
@@ -72,8 +73,18 @@ func (s *redisStorage) FindRouteByID(vaultID, routeID string) (*model.Route, err
 	route.Method = fields["method"]
 	route.Path = fields["path"]
 	route.Upstream = fields["upstream"]
-	route.RequestTransformationsJSON = fields["request_transformations"]
-	route.ResponseTransformationsJSON = fields["response_transformations"]
+
+	if fields["request_transformations"] == "" {
+		route.RequestTransformationsJSON = json.RawMessage(nil)
+	} else {
+		route.RequestTransformationsJSON = json.RawMessage([]byte(fields["request_transformations"]))
+	}
+
+	if fields["response_transformations"] == "" {
+		route.ResponseTransformationsJSON = json.RawMessage(nil)
+	} else {
+		route.ResponseTransformationsJSON = json.RawMessage([]byte(fields["response_transformations"]))
+	}
 
 	return route, nil
 }

@@ -43,3 +43,9 @@ curl vltgW1X5uISWemT.proxy.vaulty.dev:8080/credit-cards -d @card.json
 ## Redis
 
 ```redis-server /usr/local/etc/redis.conf````
+
+## Sidekiq
+
+transformer tests depend on sidekiq. Please, run it like this (locally):
+
+```ENV=test bundle exec sidekiq -r ./lib/proxy_worker.rb```

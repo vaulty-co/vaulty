@@ -45,7 +45,7 @@ func TestRequestTransformation(t *testing.T) {
 		Path:                       "/tokenize",
 		VaultID:                    "vlt1",
 		Upstream:                   "http://example.com",
-		RequestTransformationsJSON: transformationJSON,
+		RequestTransformationsJSON: json.RawMessage(transformationJSON),
 	}
 
 	err := rs.CreateRoute(route)
@@ -110,7 +110,7 @@ func TestResponseTransformation(t *testing.T) {
 		Path:                        "/tokenize",
 		VaultID:                     "vlt1",
 		Upstream:                    "http://example.com",
-		ResponseTransformationsJSON: transformationJSON,
+		ResponseTransformationsJSON: json.RawMessage(transformationJSON),
 	}
 
 	err := rs.CreateRoute(route)

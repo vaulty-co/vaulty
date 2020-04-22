@@ -21,13 +21,12 @@ func (s *Server) routes() http.Handler {
 
 			r.Route("/routes", func(r chi.Router) {
 				r.Post("/", s.HandleRouteCreate())
-				// r.Get("/", s.HandleRouteList())
-				// r.Route("/{routeID}", func(r chi.Router) {
-				// 	r.Use(s.RouteCtx)
-				// 	r.Get("/", s.HandleRouteFind())
-				// 	r.Put("/", s.HandleRouteUpdate())
-				// 	r.Delete("/", s.HandleRouteDelete())
-				// })
+				r.Get("/", s.HandleRouteList())
+				r.Route("/{routeID}", func(r chi.Router) {
+					r.Use(s.RouteCtx)
+					r.Get("/", s.HandleRouteFind())
+					r.Delete("/", s.HandleRouteDelete())
+				})
 			})
 		})
 	})

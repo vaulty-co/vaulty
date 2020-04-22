@@ -69,7 +69,12 @@ func (s *redisStorage) DeleteVault(vaultID string) error {
 		ID: vaultID,
 	}
 
-	err := s.redisClient.LRem("vaults", 1, vault.ID).Err()
+	err := s.DeleteRoutes(vaultID)
+	if err != nil {
+		return err
+	}
+
+	err = s.redisClient.LRem("vaults", 1, vault.ID).Err()
 	if err != nil {
 		return err
 	}

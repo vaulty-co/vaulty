@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/vaulty/proxy/api/render"
 	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
 )
@@ -32,7 +33,7 @@ func (s *Server) HandleVaultCreate() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(vault)
+		render.JSON(w, vault, http.StatusOK)
 	}
 }
 
@@ -44,7 +45,7 @@ func (s *Server) HandleVaultList() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(vaults)
+		render.JSON(w, vaults, http.StatusOK)
 	}
 }
 
@@ -66,7 +67,7 @@ func (s *Server) HandleVaultFind() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vault := request.VaultFrom(r.Context())
 
-		json.NewEncoder(w).Encode(vault)
+		render.JSON(w, vault, http.StatusOK)
 	}
 }
 
@@ -102,6 +103,6 @@ func (s *Server) HandleVaultUpdate() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(vault)
+		render.JSON(w, vault, http.StatusOK)
 	}
 }

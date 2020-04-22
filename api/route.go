@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/vaulty/proxy/api/render"
 	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
 )
@@ -28,7 +29,7 @@ func (s *Server) HandleRouteCreate() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(route)
+		render.JSON(w, route, http.StatusOK)
 	}
 }
 
@@ -41,7 +42,7 @@ func (s *Server) HandleRouteList() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(routes)
+		render.JSON(w, routes, http.StatusOK)
 	}
 }
 
@@ -64,7 +65,7 @@ func (s *Server) HandleRouteFind() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := request.RouteFrom(r.Context())
 
-		json.NewEncoder(w).Encode(route)
+		render.JSON(w, route, http.StatusOK)
 	}
 }
 

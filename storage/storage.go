@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/go-redis/redis"
 	"github.com/vaulty/proxy/model"
@@ -21,7 +22,7 @@ type Storage interface {
 
 	// Route
 	CreateRoute(*model.Route) error
-	FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error)
+	FindRoute(vaultID string, type_ model.RouteType, req *http.Request) (*model.Route, error)
 	FindRouteByID(vaultID, routeID string) (*model.Route, error)
 	ListRoutes(vaultID string) ([]*model.Route, error)
 	DeleteRoute(vaultID, routeID string) error

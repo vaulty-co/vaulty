@@ -23,12 +23,18 @@ func TestWithRoute(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("FindRoute", func(t *testing.T) {
-		route, err := rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/tokenize")
+		req, err := http.NewRequest(http.MethodPost, "/tokenize", nil)
+		require.NoError(t, err)
+
+		route, err := rs.FindRoute("vlt1", model.RouteInbound, req)
 		require.NoError(t, err)
 		require.NotEmpty(t, route.ID)
 		require.Equal(t, "http://example.com", route.Upstream)
 
-		route, err = rs.FindRoute("vlt1", model.RouteInbound, http.MethodPost, "/nothing")
+		req, err = http.NewRequest(http.MethodPost, "/nothing", nil)
+		require.NoError(t, err)
+
+		route, err = rs.FindRoute("vlt1", model.RouteInbound, req)
 		require.Equal(t, ErrNoRows, err)
 	})
 

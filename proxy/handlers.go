@@ -54,7 +54,7 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 		}
 
 		// find route
-		route, err := p.storage.FindRoute(vault.ID, ctxUserData(ctx).routeType, req.Method, req.URL.Path)
+		route, err := p.storage.FindRoute(vault.ID, ctxUserData(ctx).routeType, req)
 		if err != nil {
 			ctx.Warnf(err.Error())
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)

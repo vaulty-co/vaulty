@@ -11,6 +11,7 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/elazarl/goproxy/ext/auth"
 	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/proxy/storage"
 )
 
 func (p *Proxy) SetRouteType() goproxy.ReqHandler {
@@ -53,21 +54,18 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			req.URL.Host = vault.UpstreamURL().Host
 		}
 
-		// find route
 		route, err := p.storage.FindRoute(vault.ID, ctxUserData(ctx).routeType, req)
+		if err == storage.ErrNoRows {
+			ctx.Warnf("Route was not found")
+			return req, nil
+		}
 		if err != nil {
 			ctx.Warnf(err.Error())
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
-		if route == nil {
-			ctx.Warnf("No route found")
-			return req, nil
-		}
-
 		ctxUserData(ctx).route = route
 
-		// transform request
 		err = p.transformer.TransformRequestBody(ctxUserData(ctx).route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
@@ -99,12 +97,10 @@ func getVaultID(baseHost, host string) (string, error) {
 
 func (p *Proxy) HandleResponse() goproxy.RespHandler {
 	return goproxy.FuncRespHandler(func(res *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-		// no route for current request
 		if ctxUserData(ctx).route == nil {
 			return res
 		}
 
-		// transform response
 		err := p.transformer.TransformResponseBody(ctxUserData(ctx).route, res)
 		if err != nil {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
@@ -116,8 +112,6 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 
 func (p *Proxy) HandleConnect() goproxy.HttpsHandler {
 	return goproxy.FuncHttpsHandler(func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-		// handle error here
-		// if no vaultID
 		vaultID, password, ok := proxyAuth(ctx.Req)
 
 		if !ok || password != "pass" {
@@ -136,7 +130,6 @@ var proxyAuthorizationHeader = "Proxy-Authorization"
 
 func proxyAuth(req *http.Request) (user, passwd string, ok bool) {
 	authheader := strings.SplitN(req.Header.Get("Proxy-Authorization"), " ", 2)
-	// req.Header.Del("Proxy-Authorization")
 	if len(authheader) != 2 || authheader[0] != "Basic" {
 		return "", "", false
 	}

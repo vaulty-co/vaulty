@@ -39,8 +39,7 @@ func (s *TestStorage) FindRoute(vaultID string, type_ model.RouteType, req *http
 
 	route, ok := testRoutes[routeKey]
 	if !ok {
-		// route was not found
-		return nil, nil
+		return nil, storage.ErrNoRows
 	}
 
 	return route, nil

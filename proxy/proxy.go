@@ -33,7 +33,8 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 		server.ServeHTTP(w, req)
 	})
 
-	// proxy.OnRequest(matchOutboundRoute()).HandleConnect(goproxy.AlwaysMitm)
+	server.OnRequest().HandleConnect(proxy.HandleConnect())
+	server.OnRequest().Do(proxy.SetRouteType())
 	server.OnRequest().Do(proxy.HandleRequest())
 	server.OnResponse().Do(proxy.HandleResponse())
 	server.Verbose = true

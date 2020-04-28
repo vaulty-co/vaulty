@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
+	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/go-redis/redis v6.15.7+incompatible

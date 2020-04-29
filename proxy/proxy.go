@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/elazarl/goproxy"
@@ -16,7 +17,11 @@ type Proxy struct {
 	config      *core.Configuration
 }
 
-func NewProxy(storage storage.Storage, transformer transformer.Transformer, config *core.Configuration) *Proxy {
+func NewProxy(storage storage.Storage, transformer transformer.Transformer, config *core.Configuration) (*Proxy, error) {
+	if config.ProxyPassword == "" {
+		return nil, errors.New("Proxy password must be specified via config file or PROXY_PASS environment variable")
+	}
+
 	server := goproxy.NewProxyHttpServer()
 
 	proxy := &Proxy{
@@ -39,12 +44,9 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	server.OnResponse().Do(proxy.HandleResponse())
 	server.Verbose = true
 
-	return proxy
+	return proxy, nil
 }
 
 func (s *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.server.ServeHTTP(w, r)
 }
-
-// func (p *Proxy) Run(port string) {
-// }

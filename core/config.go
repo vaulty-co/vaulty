@@ -8,9 +8,10 @@ import (
 )
 
 type Configuration struct {
-	Environment string `yaml:"environment" envconfig:"PROXY_ENV"`
-	BaseHost    string `yaml:"base_host" envconfig:"BASE_HOST"`
-	Redis       struct {
+	Environment   string `yaml:"environment" envconfig:"PROXY_ENV"`
+	BaseHost      string `yaml:"base_host" envconfig:"BASE_HOST"`
+	ProxyPassword string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
+	Redis         struct {
 		URL string `yaml:"url" envconfig:"REDIS_URL"`
 	}
 }

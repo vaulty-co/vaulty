@@ -114,7 +114,7 @@ func (p *Proxy) HandleConnect() goproxy.HttpsHandler {
 	return goproxy.FuncHttpsHandler(func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 		vaultID, password, ok := proxyAuth(ctx.Req)
 
-		if !ok || password != "pass" {
+		if !ok || password != p.config.ProxyPassword {
 			ctx.Resp = auth.BasicUnauthorized(ctx.Req, "")
 			return goproxy.RejectConnect, host
 		}

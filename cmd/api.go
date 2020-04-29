@@ -30,7 +30,7 @@ var apiCommand = &cli.Command{
 		server := api.NewServer(storage)
 
 		fmt.Printf("==> Vaulty API server started on port %v! in %v environment\n", port, environment)
-		http.ListenAndServe(":"+port, server)
-		return nil
+		err := http.ListenAndServe(":"+port, server)
+		return err
 	},
 }

@@ -34,14 +34,17 @@ func TestInboundRoute(t *testing.T) {
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 
-	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
+	ps, err := NewProxy(st, tr, config)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
 	defer proxy.Close()
 
 	vault := &model.Vault{
 		ID:       "vlt1",
 		Upstream: upstream.URL,
 	}
-	err := st.CreateVault(vault)
+	err = st.CreateVault(vault)
 	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
@@ -120,7 +123,10 @@ func TestOutboundRoute(t *testing.T) {
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 
-	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
+	ps, err := NewProxy(st, tr, config)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
 	defer proxy.Close()
 
 	// example.com will never be reached for Outbound routes
@@ -128,7 +134,7 @@ func TestOutboundRoute(t *testing.T) {
 		ID:       "vlt1",
 		Upstream: "https://example.com",
 	}
-	err := st.CreateVault(vault)
+	err = st.CreateVault(vault)
 	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
@@ -163,7 +169,7 @@ func TestOutboundRoute(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
 
 		proxyURL, _ := url.Parse(proxy.URL)
-		proxyURL.User = url.UserPassword(vault.ID, "pass")
+		proxyURL.User = url.UserPassword(vault.ID, config.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {

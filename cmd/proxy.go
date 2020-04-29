@@ -29,10 +29,13 @@ var proxyCommand = &cli.Command{
 		storage := storage.NewRedisStorage(redisClient)
 		transformer := transformer.NewSidekiqTransformer(redisClient)
 
-		proxy := proxy.NewProxy(storage, transformer, config)
+		proxy, err := proxy.NewProxy(storage, transformer, config)
+		if err != nil {
+			return err
+		}
 
 		fmt.Printf("==> Vaulty proxy server started on port %v! in %v environment\n", port, environment)
-		http.ListenAndServe(":"+port, proxy)
-		return nil
+		err = http.ListenAndServe(":"+port, proxy)
+		return err
 	},
 }

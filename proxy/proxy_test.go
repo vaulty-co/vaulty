@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/model"
@@ -43,7 +42,7 @@ func TestInboundRoute(t *testing.T) {
 		Upstream: upstream.URL,
 	}
 	err := st.CreateVault(vault)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
 		ID:       "rt1",
@@ -53,7 +52,7 @@ func TestInboundRoute(t *testing.T) {
 		VaultID:  vault.ID,
 		Upstream: upstream.URL,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))
@@ -130,7 +129,7 @@ func TestOutboundRoute(t *testing.T) {
 		Upstream: "https://example.com",
 	}
 	err := st.CreateVault(vault)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
 		ID:      "rt1",
@@ -139,12 +138,10 @@ func TestOutboundRoute(t *testing.T) {
 		Path:    upstream.URL + "/tokenize",
 		VaultID: vault.ID,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Test proxy requires vault ID and pass in BasicAuth", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
-		req.SetBasicAuth("vlt1", "pass")
-
+		// no user:password set for proxy
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
 				return url.Parse(proxy.URL)
@@ -156,13 +153,14 @@ func TestOutboundRoute(t *testing.T) {
 			Transport: transport,
 		}
 
+		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
+
 		_, err := client.Do(req)
 		require.Contains(t, err.Error(), "Proxy Authentication Required")
 	})
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
-		req.SetBasicAuth("vlt1", "pass")
 
 		proxyURL, _ := url.Parse(proxy.URL)
 		proxyURL.User = url.UserPassword(vault.ID, "pass")
@@ -179,9 +177,7 @@ func TestOutboundRoute(t *testing.T) {
 		}
 
 		res, err := client.Do(req)
-		if err != nil {
-			assert.NoError(t, err)
-		}
+		require.NoError(t, err)
 
 		want := "request transformed response transformed"
 		got := readBody(res.Body)

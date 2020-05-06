@@ -3,6 +3,8 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/rs/xid"
 	"github.com/vaulty/proxy/model"
@@ -33,12 +35,23 @@ func (s *redisStorage) CreateRoute(route *model.Route) error {
 
 	return err
 }
+func (s *redisStorage) FindRoute(vaultID string, type_ model.RouteType, req *http.Request) (*model.Route, error) {
+	var target string
 
-func (s *redisStorage) FindRoute(vaultID string, type_ model.RouteType, method, path string) (*model.Route, error) {
+	if type_ == model.RouteInbound {
+		target = req.URL.Path
+	} else {
+		matchingURL := &url.URL{}
+		matchingURL.Host = req.URL.Host
+		matchingURL.Scheme = req.URL.Scheme
+		matchingURL.Path = req.URL.Path
+		target = matchingURL.String()
+	}
+
 	route := &model.Route{
 		Type:    type_,
-		Method:  method,
-		Path:    path,
+		Method:  req.Method,
+		Path:    target,
 		VaultID: vaultID,
 	}
 

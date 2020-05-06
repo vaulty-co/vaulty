@@ -2,15 +2,19 @@ package proxy
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage/test_storage"
@@ -23,7 +27,7 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, readBody(req.Body)+" response")
 }
 
-var upstream = httptest.NewServer(EchoHandler{})
+var upstream = httptest.NewTLSServer(EchoHandler{})
 
 func TestInboundRoute(t *testing.T) {
 	defer test_storage.Reset()
@@ -32,15 +36,18 @@ func TestInboundRoute(t *testing.T) {
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 
-	proxy := httptest.NewServer(NewProxy(st, tr, config).server)
+	ps, err := NewProxy(st, tr, config)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
 	defer proxy.Close()
 
 	vault := &model.Vault{
 		ID:       "vlt1",
 		Upstream: upstream.URL,
 	}
-	err := st.CreateVault(vault)
-	assert.NoError(t, err)
+	err = st.CreateVault(vault)
+	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
 		ID:       "rt1",
@@ -50,7 +57,7 @@ func TestInboundRoute(t *testing.T) {
 		VaultID:  vault.ID,
 		Upstream: upstream.URL,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))
@@ -103,6 +110,94 @@ func TestInboundRoute(t *testing.T) {
 		}
 
 		want := "Vault was not found"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
+}
+
+func TestOutboundRoute(t *testing.T) {
+	defer test_storage.Reset()
+
+	st := test_storage.NewTestStorage()
+	tr := test_transformer.NewTransformer()
+	config := core.LoadConfig("../config/test.yml")
+
+	ps, err := NewProxy(st, tr, config)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
+	defer proxy.Close()
+
+	// example.com will never be reached for Outbound routes
+	vault := &model.Vault{
+		ID:       "vlt1",
+		Upstream: "https://example.com",
+	}
+	err = st.CreateVault(vault)
+	require.NoError(t, err)
+
+	err = st.CreateRoute(&model.Route{
+		ID:      "rt1",
+		Type:    model.RouteOutbound,
+		Method:  http.MethodPost,
+		Path:    upstream.URL + "/tokenize",
+		VaultID: vault.ID,
+	})
+	require.NoError(t, err)
+
+	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+	require.NoError(t, err)
+
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM(caCert)
+	require.True(t, ok)
+
+	tlsConfig := &tls.Config{}
+	tlsConfig.RootCAs = caCertPool
+
+	t.Run("Test proxy requires vault ID and pass in BasicAuth", func(t *testing.T) {
+		// no user:password set for proxy
+		transport := &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return url.Parse(proxy.URL)
+			},
+			TLSClientConfig: tlsConfig,
+		}
+
+		client := &http.Client{
+			Transport: transport,
+		}
+
+		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
+
+		_, err := client.Do(req)
+		require.Contains(t, err.Error(), "Proxy Authentication Required")
+	})
+
+	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
+
+		proxyURL, _ := url.Parse(proxy.URL)
+		proxyURL.User = url.UserPassword(vault.ID, config.ProxyPassword)
+
+		transport := &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return proxyURL, nil
+			},
+			TLSClientConfig: tlsConfig,
+		}
+
+		client := &http.Client{
+			Transport: transport,
+		}
+
+		res, err := client.Do(req)
+		require.NoError(t, err)
+
+		want := "request transformed response transformed"
 		got := readBody(res.Body)
 
 		if got != want {

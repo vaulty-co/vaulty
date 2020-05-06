@@ -1,4 +1,5 @@
 environment: development
 base_host: proxy.vaulty.dev
+ca_path: 
 redis:
   url: redis://localhost/2

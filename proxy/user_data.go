@@ -6,8 +6,10 @@ import (
 )
 
 type userData struct {
-	vault *model.Vault
-	route *model.Route
+	vault     *model.Vault
+	route     *model.Route
+	routeType model.RouteType
+	vaultID   string
 }
 
 func ctxUserData(ctx *goproxy.ProxyCtx) *userData {

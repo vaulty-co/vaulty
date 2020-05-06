@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 )
 
@@ -11,6 +12,7 @@ type Configuration struct {
 	Environment   string `yaml:"environment" envconfig:"PROXY_ENV"`
 	BaseHost      string `yaml:"base_host" envconfig:"BASE_HOST"`
 	ProxyPassword string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
+	CaPath        string `yaml:"ca_path" envconfig:"CA_PATH"`
 	Redis         struct {
 		URL string `yaml:"url" envconfig:"REDIS_URL"`
 	}
@@ -23,6 +25,7 @@ func LoadConfig(file string) *Configuration {
 
 	readFile(file, Config)
 	readEnv(Config)
+	setDefaults(Config)
 
 	return Config
 }
@@ -43,6 +46,19 @@ func readFile(file string, cfg *Configuration) {
 
 func readEnv(cfg *Configuration) {
 	err := envconfig.Process("", cfg)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func setDefaults(cfg *Configuration) {
+	if cfg.CaPath == "" {
+		cfg.CaPath = "~/.vaulty"
+	}
+
+	var err error
+	cfg.CaPath, err = homedir.Expand(cfg.CaPath)
+
 	if err != nil {
 		panic(err)
 	}

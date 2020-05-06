@@ -1,8 +1,12 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 
 	"github.com/elazarl/goproxy"
 	"github.com/vaulty/proxy/core"
@@ -23,6 +27,11 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	}
 
 	server := goproxy.NewProxyHttpServer()
+
+	err := setupCA(config)
+	if err != nil {
+		return nil, err
+	}
 
 	proxy := &Proxy{
 		server:      server,
@@ -45,6 +54,35 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	server.Verbose = true
 
 	return proxy, nil
+}
+
+func setupCA(config *core.Configuration) error {
+	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+	if err != nil {
+		return err
+	}
+
+	caKey, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.key"))
+	if err != nil {
+		return err
+	}
+
+	ca, err := tls.X509KeyPair(caCert, caKey)
+	if err != nil {
+		return err
+	}
+
+	if ca.Leaf, err = x509.ParseCertificate(ca.Certificate[0]); err != nil {
+		return err
+	}
+
+	goproxy.GoproxyCa = ca
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&ca)}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&ca)}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&ca)}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&ca)}
+
+	return nil
 }
 
 func (s *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {

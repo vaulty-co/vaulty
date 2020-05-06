@@ -3,6 +3,7 @@ package proxy
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -146,13 +148,23 @@ func TestOutboundRoute(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+	require.NoError(t, err)
+
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM(caCert)
+	require.True(t, ok)
+
+	tlsConfig := &tls.Config{}
+	tlsConfig.RootCAs = caCertPool
+
 	t.Run("Test proxy requires vault ID and pass in BasicAuth", func(t *testing.T) {
 		// no user:password set for proxy
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
 				return url.Parse(proxy.URL)
 			},
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: tlsConfig,
 		}
 
 		client := &http.Client{
@@ -175,7 +187,7 @@ func TestOutboundRoute(t *testing.T) {
 			Proxy: func(req *http.Request) (*url.URL, error) {
 				return proxyURL, nil
 			},
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: tlsConfig,
 		}
 
 		client := &http.Client{

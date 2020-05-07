@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage/test_storage"
+	"github.com/vaulty/proxy/storage/inmem"
 	"github.com/vaulty/proxy/transformer/test_transformer"
 )
 
@@ -30,9 +30,9 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 var upstream = httptest.NewTLSServer(EchoHandler{})
 
 func TestInboundRoute(t *testing.T) {
-	defer test_storage.Reset()
+	st := inmem.NewStorage()
+	defer st.Reset()
 
-	st := test_storage.NewTestStorage()
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 
@@ -119,9 +119,9 @@ func TestInboundRoute(t *testing.T) {
 }
 
 func TestOutboundRoute(t *testing.T) {
-	defer test_storage.Reset()
+	st := inmem.NewStorage()
+	defer st.Reset()
 
-	st := test_storage.NewTestStorage()
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 

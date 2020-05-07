@@ -13,12 +13,13 @@ import (
 	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/storage/test_storage"
+	"github.com/vaulty/proxy/storage/inmem"
 )
 
 func TestHandleVaultCreate(t *testing.T) {
-	server := NewServer(test_storage.NewTestStorage())
-	defer test_storage.Reset()
+	st := inmem.NewStorage()
+	server := NewServer(st)
+	defer st.Reset()
 
 	in := new(bytes.Buffer)
 	json.NewEncoder(in).Encode(&model.Vault{Upstream: "https://example.com"})
@@ -36,9 +37,9 @@ func TestHandleVaultCreate(t *testing.T) {
 }
 
 func TestVaultCtx(t *testing.T) {
-	st := test_storage.NewTestStorage()
+	st := inmem.NewStorage()
 	server := NewServer(st)
-	defer test_storage.Reset()
+	defer st.Reset()
 
 	vault := &model.Vault{Upstream: "https://example.com"}
 	err := st.CreateVault(vault)
@@ -78,9 +79,9 @@ func TestVaultCtx(t *testing.T) {
 }
 
 func TestWithVault(t *testing.T) {
-	st := test_storage.NewTestStorage()
+	st := inmem.NewStorage()
 	server := NewServer(st)
-	defer test_storage.Reset()
+	defer st.Reset()
 
 	vault := &model.Vault{Upstream: "https://example.com"}
 	err := st.CreateVault(vault)

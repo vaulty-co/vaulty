@@ -13,13 +13,13 @@ import (
 	"github.com/vaulty/proxy/api/request"
 	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/storage/test_storage"
+	"github.com/vaulty/proxy/storage/inmem"
 )
 
 func TestHandleRouteCreate(t *testing.T) {
-	st := test_storage.NewTestStorage()
-	server := NewServer(test_storage.NewTestStorage())
-	defer test_storage.Reset()
+	st := inmem.NewStorage()
+	server := NewServer(st)
+	defer st.Reset()
 
 	vault := &model.Vault{Upstream: "https://example.com"}
 	err := st.CreateVault(vault)
@@ -53,9 +53,9 @@ func TestHandleRouteCreate(t *testing.T) {
 }
 
 func TestRouteCtx(t *testing.T) {
-	st := test_storage.NewTestStorage()
+	st := inmem.NewStorage()
 	server := NewServer(st)
-	defer test_storage.Reset()
+	defer st.Reset()
 
 	vault := &model.Vault{Upstream: "https://example.com"}
 	err := st.CreateVault(vault)
@@ -115,9 +115,9 @@ func TestRouteCtx(t *testing.T) {
 }
 
 func TestWithRoute(t *testing.T) {
-	st := test_storage.NewTestStorage()
-	server := NewServer(test_storage.NewTestStorage())
-	defer test_storage.Reset()
+	st := inmem.NewStorage()
+	server := NewServer(st)
+	defer st.Reset()
 
 	vault := &model.Vault{Upstream: "https://example.com"}
 	err := st.CreateVault(vault)

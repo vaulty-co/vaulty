@@ -23,11 +23,25 @@ var Config *Configuration
 func LoadConfig(file string) *Configuration {
 	Config = &Configuration{}
 
+	setDefaults(Config)
 	readFile(file, Config)
 	readEnv(Config)
-	setDefaults(Config)
 
 	return Config
+}
+
+func setDefaults(cfg *Configuration) {
+	var err error
+
+	cfg.CaPath, err = homedir.Expand("~/.vaulty")
+	if err != nil {
+		panic(err)
+	}
+
+	cfg.RoutesFile, err = homedir.Expand("~/.vaulty/routes.json")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func readFile(file string, cfg *Configuration) {
@@ -46,19 +60,6 @@ func readFile(file string, cfg *Configuration) {
 
 func readEnv(cfg *Configuration) {
 	err := envconfig.Process("", cfg)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func setDefaults(cfg *Configuration) {
-	if cfg.CaPath == "" {
-		cfg.CaPath = "~/.vaulty"
-	}
-
-	var err error
-	cfg.CaPath, err = homedir.Expand(cfg.CaPath)
-
 	if err != nil {
 		panic(err)
 	}

@@ -10,12 +10,13 @@ import (
 )
 
 type Configuration struct {
-	Environment   string `yaml:"environment" envconfig:"PROXY_ENV"`
-	BaseHost      string `yaml:"base_host" envconfig:"BASE_HOST"`
-	ProxyPassword string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
-	RoutesFile    string `default:"~/.vaulty/routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
-	CaPath        string `default:"~/.vaulty" yaml:"ca_path" envconfig:"CA_PATH"`
-	Redis         struct {
+	Environment       string `yaml:"environment" envconfig:"PROXY_ENV"`
+	BaseHost          string `yaml:"base_host" envconfig:"BASE_HOST"`
+	ProxyPassword     string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
+	RoutesFile        string `default:"~/.vaulty/routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
+	CaPath            string `default:"~/.vaulty" yaml:"ca_path" envconfig:"CA_PATH"`
+	IsSingleVaultMode bool
+	Redis             struct {
 		URL string `yaml:"url" envconfig:"REDIS_URL"`
 	}
 }
@@ -23,7 +24,12 @@ type Configuration struct {
 var Config *Configuration
 
 func LoadConfig(file string) *Configuration {
-	Config = &Configuration{}
+	Config = &Configuration{
+		// for the MVP this will be the only working option even
+		// if we have code for multu vault mode. In the future
+		// we will see if there is a need to have multiple vaults
+		IsSingleVaultMode: true,
+	}
 
 	readFile(file, Config)
 	readEnv(Config)

@@ -35,6 +35,7 @@ func TestInboundRoute(t *testing.T) {
 
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
+	config.IsSingleVaultMode = false
 
 	ps, err := NewProxy(st, tr, config)
 	require.NoError(t, err)
@@ -116,6 +117,30 @@ func TestInboundRoute(t *testing.T) {
 			t.Errorf("Expected: %v, but got: %v", want, got)
 		}
 	})
+
+	t.Run("Test single vault mode ignores host name", func(t *testing.T) {
+		prevValue := config.IsSingleVaultMode
+		defer func() {
+			config.IsSingleVaultMode = prevValue
+		}()
+		config.IsSingleVaultMode = true
+
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/noroute", bytes.NewBufferString("request"))
+		req.Host = "localhost"
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+
+		want := "request response"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
 }
 
 func TestOutboundRoute(t *testing.T) {
@@ -124,6 +149,7 @@ func TestOutboundRoute(t *testing.T) {
 
 	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
+	config.IsSingleVaultMode = false
 
 	ps, err := NewProxy(st, tr, config)
 	require.NoError(t, err)
@@ -180,8 +206,45 @@ func TestOutboundRoute(t *testing.T) {
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
 
+		// setup user:password for proxyURL to pass basic auth
 		proxyURL, _ := url.Parse(proxy.URL)
 		proxyURL.User = url.UserPassword(vault.ID, config.ProxyPassword)
+
+		transport := &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return proxyURL, nil
+			},
+			TLSClientConfig: tlsConfig,
+		}
+
+		client := &http.Client{
+			Transport: transport,
+		}
+
+		res, err := client.Do(req)
+		require.NoError(t, err)
+
+		want := "request transformed response transformed"
+		got := readBody(res.Body)
+
+		if got != want {
+			t.Errorf("Expected: %v, but got: %v", want, got)
+		}
+	})
+
+	t.Run("Test single vault mode request and response body transformation when route matches", func(t *testing.T) {
+		prevValue := config.IsSingleVaultMode
+		defer func() {
+			config.IsSingleVaultMode = prevValue
+		}()
+		config.IsSingleVaultMode = true
+
+		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
+
+		// basic auth password "x" should not be treated as vault ID
+		// in signle vault mode
+		proxyURL, _ := url.Parse(proxy.URL)
+		proxyURL.User = url.UserPassword("x", config.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {

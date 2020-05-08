@@ -25,29 +25,16 @@ func (p *Proxy) SetRouteType() goproxy.ReqHandler {
 }
 func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		var (
-			vaultID string
-			err     error
-		)
-
-		if ctxUserData(ctx).routeType == model.RouteInbound {
-			vaultID, err = getVaultID(p.config.BaseHost, req.Host)
-			if err != nil {
-				ctx.Warnf(err.Error())
-				return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
-			}
-		} else {
-			vaultID = ctxUserData(ctx).vaultID
-		}
-
-		vault, err := p.storage.FindVault(vaultID)
+		vault, err := p.findVault(ctx, req)
 		if err != nil {
 			ctx.Warnf(err.Error())
 			return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
 		}
 
-		ctxUserData(ctx).vault = vault
-
+		// for inbound requests req contains URL of host where
+		// Vault is running e.g. proxy.vaulty.co. To forward
+		// requests to vault's upstream we should set
+		// host, port and user accordingly.
 		if ctxUserData(ctx).routeType == model.RouteInbound {
 			req.URL.Scheme = vault.UpstreamURL().Scheme
 			req.URL.User = vault.UpstreamURL().User
@@ -64,22 +51,60 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
-		ctxUserData(ctx).route = route
-
-		err = p.transformer.TransformRequestBody(ctxUserData(ctx).route, req)
+		err = p.transformer.TransformRequestBody(route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
+
+		ctxUserData(ctx).route = route
 
 		return req, nil
 	})
 }
 
+func (p *Proxy) findVault(ctx *goproxy.ProxyCtx, req *http.Request) (*model.Vault, error) {
+	var (
+		vaultID string
+		err     error
+	)
+
+	// just return first vault if IsSingleVaultMode set
+	if p.config.IsSingleVaultMode {
+		vaults, err := p.storage.ListVaults()
+		if err != nil {
+			return nil, err
+		}
+
+		if len(vaults) == 0 {
+			return nil, errors.New("No vaults found. Please, create vault first")
+		}
+
+		return vaults[0], nil
+	}
+
+	if ctxUserData(ctx).routeType == model.RouteInbound {
+		vaultID, err = getVaultIDFromHost(p.config.BaseHost, req.Host)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		vaultID = ctxUserData(ctx).vaultID
+	}
+
+	return p.storage.FindVault(vaultID)
+}
+
 var vaultIDRegexp *regexp.Regexp
 
-func getVaultID(baseHost, host string) (string, error) {
+// getVaultIDFromHost returns ID of vault from the host name
+// We expect that in multi vault setup when base host is proxy.vaulty.co
+// host name of vault looks like this:
+// 	vltXXXX.proxy.vaulty.co
+// 	vltZZZZ.proxy.vaulty.co
+//
+// Having proxy.vaulty.co as baseHost function returns vltXXXX
+func getVaultIDFromHost(baseHost, host string) (string, error) {
 	if vaultIDRegexp == nil {
-		// vltXXXX.proxy.vaulty.co
 		vaultHost := fmt.Sprintf(`^(vlt\w+).%s(:\d+)?$`, baseHost)
 		vaultIDRegexp = regexp.MustCompile(vaultHost)
 	}

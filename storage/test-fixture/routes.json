@@ -1,0 +1,45 @@
+{
+	"vault": {
+		"upstream": "https://api.yourserver.com",
+		"engine": "safe"
+	},
+	"routes": {
+		"inbound": [
+			{
+				"method": "POST",
+				"path": "/cards",
+				"request_transformations": [
+					{
+						"type": "json",
+						"expression": "$.card.number",
+						"action": { "type": "conceal" }
+					},
+					{
+						"type": "json",
+						"expression": "$.card.cvc",
+						"action": { "type": "conceal" }
+					}
+				]
+			}
+		],
+		"outbound": [
+			{
+				"method": "POST",
+				"path": "https://api.stripe.com/v1/tokens",
+				"request_transformations": [
+					{
+						"type": "json",
+						"expression": "$.card.number",
+						"action": { "type": "reveal" }
+					},
+					{
+						"type": "json",
+						"expression": "$.card.cvc",
+						"action": { "type": "reveal" }
+					}
+				]
+			}
+		]
+	}
+}
+

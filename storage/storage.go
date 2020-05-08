@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-redis/redis"
 	"github.com/vaulty/proxy/model"
 )
 
@@ -13,6 +12,8 @@ var (
 )
 
 type Storage interface {
+	Reset()
+
 	// Vault
 	CreateVault(*model.Vault) error
 	FindVault(vaultID string) (*model.Vault, error)
@@ -27,14 +28,4 @@ type Storage interface {
 	ListRoutes(vaultID string) ([]*model.Route, error)
 	DeleteRoute(vaultID, routeID string) error
 	DeleteRoutes(vaultID string) error
-}
-
-type redisStorage struct {
-	redisClient *redis.Client
-}
-
-func NewRedisStorage(redisClient *redis.Client) Storage {
-	return &redisStorage{
-		redisClient: redisClient,
-	}
 }

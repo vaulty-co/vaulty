@@ -8,6 +8,7 @@ import (
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/proxy"
 	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/proxy/storage/inmem"
 	"github.com/vaulty/proxy/transformer"
 )
 
@@ -25,11 +26,17 @@ var proxyCommand = &cli.Command{
 		port := c.String("port")
 		environment := c.String("environment")
 		config := core.LoadConfig(fmt.Sprintf("config/%s.yml", environment))
+
+		st := inmem.NewStorage()
+		err := storage.LoadFromFile(config.RoutesFile, st)
+		if err != nil {
+			return err
+		}
+
 		redisClient := core.NewRedisClient(config)
-		storage := storage.NewRedisStorage(redisClient)
 		transformer := transformer.NewSidekiqTransformer(redisClient)
 
-		proxy, err := proxy.NewProxy(storage, transformer, config)
+		proxy, err := proxy.NewProxy(st, transformer, config)
 		if err != nil {
 			return err
 		}

@@ -4,15 +4,23 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/vaulty/proxy/model"
 )
 
-type RoutesFile struct {
-	Vault  *model.Vault `json:"vault"`
+type route struct {
+	Method                  string
+	Path                    string
+	RequestTransformations  []map[string]interface{} `mapstructure:"request_transformations"`
+	ResponseTransformations []map[string]interface{} `mapstructure:"response_transformations"`
+}
+
+type routesFile struct {
+	Vault  map[string]interface{}
 	Routes struct {
-		Inbound  []*model.Route `json:"inbound"`
-		Outbound []*model.Route `json:"outbound"`
-	} `json:"routes"`
+		Inbound  []*route
+		Outbound []*route
+	}
 }
 
 func LoadFromFile(file string, storage Storage) error {
@@ -21,28 +29,35 @@ func LoadFromFile(file string, storage Storage) error {
 		return err
 	}
 
-	routesFile := &RoutesFile{}
-	err = json.Unmarshal(fileContent, routesFile)
+	var result routesFile
+	err = json.Unmarshal(fileContent, &result)
 	if err != nil {
 		return err
 	}
 
-	vault := routesFile.Vault
-	storage.CreateVault(vault)
+	var vault model.Vault
+	mapstructure.Decode(result.Vault, &vault)
+	storage.CreateVault(&vault)
 
-	for _, route := range routesFile.Routes.Inbound {
-		route.Type = model.RouteInbound
-		route.VaultID = vault.ID
-		err = storage.CreateRoute(route)
+	for _, rt := range result.Routes.Inbound {
+		route := model.Route{
+			Type:    model.RouteInbound,
+			VaultID: vault.ID,
+		}
+		mapstructure.Decode(rt, &route)
+		err = storage.CreateRoute(&route)
 		if err != nil {
 			return err
 		}
 	}
 
-	for _, route := range routesFile.Routes.Outbound {
-		route.Type = model.RouteOutbound
-		route.VaultID = vault.ID
-		err = storage.CreateRoute(route)
+	for _, rt := range result.Routes.Outbound {
+		route := model.Route{
+			Type:    model.RouteOutbound,
+			VaultID: vault.ID,
+		}
+		mapstructure.Decode(rt, &route)
+		err = storage.CreateRoute(&route)
 		if err != nil {
 			return err
 		}

@@ -2,8 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/mitchellh/mapstructure"
@@ -96,48 +94,18 @@ func buildTransformations(rawTransformations []map[string]interface{}) ([]transf
 	var transformations []transform.Transformer
 
 	for _, tr := range rawTransformations {
-		var transformation transform.Transformer
-
-		action, err := buildAction(tr["action"].(map[string]interface{}))
+		action, err := action.Factory(tr["action"])
 		if err != nil {
 			return nil, err
 		}
 
-		switch tr["type"] {
-		case "json":
-			jsonTransformation := &transform.Json{
-				Action: action,
-			}
-			err := mapstructure.Decode(tr, jsonTransformation)
-			if err != nil {
-				return nil, err
-			}
-			transformation = jsonTransformation
+		transformation, err := transform.Factory(tr, action)
+		if err != nil {
+			return nil, err
 		}
 
 		transformations = append(transformations, transformation)
 	}
 
 	return transformations, nil
-}
-
-func buildAction(rawAction map[string]interface{}) (transform.Transformer, error) {
-	switch rawAction["type"] {
-	case "encrypt":
-		result := &action.Encrypt{}
-		err := mapstructure.Decode(rawAction, result)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
-	case "tokenize":
-		result := &action.Tokenize{}
-		err := mapstructure.Decode(rawAction, result)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
-	default:
-		return nil, errors.New(fmt.Sprintf("Unknown action type %s", rawAction["type"]))
-	}
 }

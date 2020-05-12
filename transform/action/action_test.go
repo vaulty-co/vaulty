@@ -1,4 +1,4 @@
-package transform
+package action
 
 import (
 	"reflect"
@@ -9,11 +9,10 @@ import (
 
 func TestFactory(t *testing.T) {
 	input := map[string]interface{}{
-		"type":       "json",
-		"expression": "card.number",
+		"type": "tokenize",
 	}
 
-	res, err := Factory(input, nil)
+	res, err := Factory(input)
 	require.NoError(t, err)
-	require.Equal(t, reflect.TypeOf(&Json{}), reflect.TypeOf(res))
+	require.Equal(t, reflect.TypeOf(&Tokenize{}), reflect.TypeOf(res))
 }

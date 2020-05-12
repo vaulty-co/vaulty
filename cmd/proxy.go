@@ -9,7 +9,6 @@ import (
 	"github.com/vaulty/proxy/proxy"
 	"github.com/vaulty/proxy/storage"
 	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transformer"
 )
 
 var proxyCommand = &cli.Command{
@@ -33,10 +32,7 @@ var proxyCommand = &cli.Command{
 			return err
 		}
 
-		redisClient := core.NewRedisClient(config)
-		transformer := transformer.NewSidekiqTransformer(redisClient)
-
-		proxy, err := proxy.NewProxy(st, transformer, config)
+		proxy, err := proxy.NewProxy(st, config)
 		if err != nil {
 			return err
 		}

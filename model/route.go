@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+
+	"github.com/vaulty/proxy/transform"
 )
 
 type Route struct {
-	ID                          string          `json:"id"`
-	Type                        RouteType       `json:"type"`
-	Method                      string          `json:"method"`
-	Path                        string          `json:"path"`
-	VaultID                     string          `json:"vault_id"`
-	Upstream                    string          `json:"upstream"`
+	ID                          string    `json:"id"`
+	Type                        RouteType `json:"type"`
+	Method                      string    `json:"method"`
+	Path                        string    `json:"path"`
+	VaultID                     string    `json:"vault_id"`
+	Upstream                    string    `json:"upstream"`
+	RequestTransformations      []transform.Transformer
+	ResponseTransformations     []transform.Transformer
 	RequestTransformationsJSON  json.RawMessage `json:"request_transformations"`
 	ResponseTransformationsJSON json.RawMessage `json:"response_transformations"`
 }

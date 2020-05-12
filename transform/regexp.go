@@ -2,22 +2,29 @@ package transform
 
 import (
 	"regexp"
+	"sync"
 )
 
 type Regexp struct {
 	Expression     string
 	SubmatchNumber int
 	Action         Transformer
+	once           sync.Once
 }
 
 func (t *Regexp) Transform(body []byte) ([]byte, error) {
+	var re *regexp.Regexp
+
+	t.once.Do(func() {
+		re = regexp.MustCompile(t.Expression)
+	})
+
 	// it does not make sence to do anything
 	// if user specified submatch that does not exist
 	if t.SubmatchNumber < 1 {
 		return body, nil
 	}
 
-	re := regexp.MustCompile(t.Expression)
 	result := re.FindSubmatchIndex(body)
 
 	// if max position of submatch's end is

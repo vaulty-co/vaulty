@@ -29,6 +29,10 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 var upstream = httptest.NewTLSServer(EchoHandler{})
 
+var fakeTransformer transform.Transformer = transform.TransformerFunc(func(body []byte) ([]byte, error) {
+	return append(body, " transformed"...), nil
+})
+
 func TestInboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
@@ -56,8 +60,8 @@ func TestInboundRoute(t *testing.T) {
 		Path:                    "/tokenize",
 		VaultID:                 vault.ID,
 		Upstream:                upstream.URL,
-		RequestTransformations:  []transform.Transformer{&FakeTransformer{}},
-		ResponseTransformations: []transform.Transformer{&FakeTransformer{}},
+		RequestTransformations:  []transform.Transformer{fakeTransformer},
+		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 
@@ -144,17 +148,6 @@ func TestInboundRoute(t *testing.T) {
 	})
 }
 
-type FakeTransformer struct {
-}
-
-func (f *FakeTransformer) Transform(body []byte) ([]byte, error) {
-	return append(body, " transformed"...), nil
-}
-
-func NewTransformer() transform.Transformer {
-	return &FakeTransformer{}
-}
-
 func TestOutboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
@@ -182,8 +175,8 @@ func TestOutboundRoute(t *testing.T) {
 		Method:                  http.MethodPost,
 		Path:                    upstream.URL + "/tokenize",
 		VaultID:                 vault.ID,
-		RequestTransformations:  []transform.Transformer{&FakeTransformer{}},
-		ResponseTransformations: []transform.Transformer{&FakeTransformer{}},
+		RequestTransformations:  []transform.Transformer{fakeTransformer},
+		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 

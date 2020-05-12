@@ -1,9 +1,6 @@
 package transform
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -18,7 +15,10 @@ func (t *Json) Transform(body []byte) ([]byte, error) {
 
 	// Currently we perform transformations only over strings
 	if result.Type != gjson.String {
-		return nil, errors.New(fmt.Sprintf("Result received by expression (%s) is not json String", t.Expression))
+		// I think it may be a good idea to tell something
+		// about why we are here. It's because of non-string value or
+		// invalid json?
+		return body, nil
 	}
 
 	value := result.Str

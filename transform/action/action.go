@@ -25,6 +25,13 @@ func Factory(rawInput interface{}) (transform.Transformer, error) {
 			return nil, err
 		}
 		return result, nil
+	case "mask":
+		result := &Mask{}
+		err := mapstructure.Decode(input, result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Unknown action type %s", input["type"]))
 	}

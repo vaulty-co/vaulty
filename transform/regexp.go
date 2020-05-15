@@ -7,16 +7,15 @@ import (
 
 type Regexp struct {
 	Expression     string
-	SubmatchNumber int
+	SubmatchNumber int `mapstructure:"submatch_number"`
 	Action         Transformer
 	once           sync.Once
+	re             *regexp.Regexp
 }
 
 func (t *Regexp) Transform(body []byte) ([]byte, error) {
-	var re *regexp.Regexp
-
 	t.once.Do(func() {
-		re = regexp.MustCompile(t.Expression)
+		t.re = regexp.MustCompile(t.Expression)
 	})
 
 	// it does not make sence to do anything
@@ -25,16 +24,17 @@ func (t *Regexp) Transform(body []byte) ([]byte, error) {
 		return body, nil
 	}
 
-	result := re.FindSubmatchIndex(body)
+	result := t.re.FindSubmatchIndex(body)
 
-	// if max position of submatch's end is
+	// result[2*n:2*n+1] identifies the indexes
+	// of the nth submatch.
+	// If max position of submatch's end is
 	// greater of max position of result it
 	// means we don't have enough submatches
 	if t.SubmatchNumber*2+1 > len(result)-1 {
 		return body, nil
 	}
 
-	// result[2*n:2*n+1] identifies the indexes of the nth submatch
 	n := t.SubmatchNumber
 	prefix := body[0:result[2*n]]
 	value := body[result[2*n]:result[2*n+1]]

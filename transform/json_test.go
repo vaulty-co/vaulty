@@ -7,25 +7,46 @@ import (
 )
 
 func TestJson(t *testing.T) {
+	t.Run("Test building transformer from JSON", func(t *testing.T) {
+		rawJson := []byte(`
+{
+	"type":"json",
+	"expression":"user.email"
+}
+`)
+
+		fakeAction := TransformerFunc(func(body []byte) ([]byte, error) {
+			require.Equal(t, []byte("john@example.com"), body)
+			return body, nil
+		})
+		transformation, err := transformerFromJSON(rawJson, fakeAction)
+		require.NoError(t, err)
+
+		body := []byte(`{ "user": { "name": "John", "email": "john@example.com" } }`)
+
+		body, err = transformation.Transform(body)
+	})
+
 	t.Run("Test transformation", func(t *testing.T) {
 		tr := &Json{
 			Expression: "card.number",
 			Action: TransformerFunc(func(body []byte) ([]byte, error) {
-				return append(body, []byte(" transformed")...), nil
+				require.Equal(t, []byte("4242"), body)
+				return body, nil
 			}),
 		}
 
 		body := []byte(`{ "card": { "number": "4242", "cvc": "123", "exp": "10/24" } }`)
-		newBody, err := tr.Transform(body)
+		_, err := tr.Transform(body)
 		require.NoError(t, err)
-		require.Contains(t, string(newBody), "4242 transformed")
 	})
 
 	t.Run("Test transformation with invalid json", func(t *testing.T) {
 		tr := &Json{
 			Expression: "card.number",
 			Action: TransformerFunc(func(body []byte) ([]byte, error) {
-				return append(body, []byte(" transformed")...), nil
+				require.Fail(t, "Should not be called")
+				return nil, nil
 			}),
 		}
 

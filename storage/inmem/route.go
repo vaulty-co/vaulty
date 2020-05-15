@@ -27,9 +27,9 @@ func (s *inmemStorage) FindRoute(vaultID string, type_ model.RouteType, req *htt
 		target = req.URL.Path
 	} else {
 		matchingURL := &url.URL{}
-		matchingURL.Host = req.URL.Host
 		matchingURL.Scheme = req.URL.Scheme
 		matchingURL.Path = req.URL.Path
+		matchingURL.Host = req.Host
 		target = matchingURL.String()
 	}
 

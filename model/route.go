@@ -54,6 +54,27 @@ func (r *Route) UpstreamURL() *url.URL {
 	return u
 }
 
+func (r *Route) TransformRequest(body []byte) ([]byte, error) {
+	return Transform(body, r.RequestTransformations)
+}
+
+func (r *Route) TransformResponse(body []byte) ([]byte, error) {
+	return Transform(body, r.ResponseTransformations)
+}
+
+func Transform(body []byte, transformations []transform.Transformer) ([]byte, error) {
+	var err error
+
+	for _, tr := range transformations {
+		body, err = tr.Transform(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return body, nil
+}
+
 func (rt RouteType) MarshalBinary() ([]byte, error) {
 	return []byte(rt), nil
 }

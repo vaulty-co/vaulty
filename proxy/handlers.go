@@ -144,11 +144,9 @@ func (p *Proxy) TransformRequestBody(route *model.Route, req *http.Request) erro
 		return err
 	}
 
-	for _, tr := range route.RequestTransformations {
-		body, err = tr.Transform(body)
-		if err != nil {
-			return err
-		}
+	body, err = route.TransformRequest(body)
+	if err != nil {
+		return err
 	}
 
 	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))
@@ -167,11 +165,9 @@ func (p *Proxy) TransformResponseBody(route *model.Route, res *http.Response) er
 		return err
 	}
 
-	for _, tr := range route.ResponseTransformations {
-		body, err = tr.Transform(body)
-		if err != nil {
-			return err
-		}
+	body, err = route.TransformResponse(body)
+	if err != nil {
+		return err
 	}
 
 	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))

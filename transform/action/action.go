@@ -8,11 +8,22 @@ import (
 	"github.com/vaulty/proxy/transform"
 )
 
-func Factory(rawInput interface{}) (transform.Transformer, error) {
+func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error) {
 	input := rawInput.(map[string]interface{})
 	switch input["type"] {
 	case "encrypt":
-		result := &Encrypt{}
+		result := &Encrypt{
+			enc: opts.Encrypter,
+		}
+		err := mapstructure.Decode(input, result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "decrypt":
+		result := &Decrypt{
+			enc: opts.Encrypter,
+		}
 		err := mapstructure.Decode(input, result)
 		if err != nil {
 			return nil, err

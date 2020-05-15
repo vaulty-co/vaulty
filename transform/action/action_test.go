@@ -12,7 +12,7 @@ func TestFactory(t *testing.T) {
 		"type": "tokenize",
 	}
 
-	res, err := Factory(input)
+	res, err := Factory(input, &Options{})
 	require.NoError(t, err)
 	require.Equal(t, reflect.TypeOf(&Tokenize{}), reflect.TypeOf(res))
 }

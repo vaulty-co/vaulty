@@ -6,11 +6,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/proxy/storage"
 	"github.com/vaulty/proxy/storage/inmem"
+	"github.com/vaulty/proxy/transform/action"
 )
 
 func TestLoadFromFile(t *testing.T) {
 	st := inmem.NewStorage()
-	err := storage.LoadFromFile("./test-fixture/routes.json", st)
+
+	err := storage.LoadFromFile("./test-fixture/routes.json", &storage.LoaderOptions{
+		Storage:       st,
+		ActionOptions: &action.Options{},
+	})
 	require.NoError(t, err)
 
 	vaults, err := st.ListVaults()

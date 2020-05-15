@@ -7,7 +7,7 @@ type Encrypter interface {
 	Decrypt(ciphertext []byte) ([]byte, error)
 }
 
-func New(key string) (Encrypter, error) {
+func NewEncrypter(key string) (Encrypter, error) {
 	if key == "" {
 		return &None{}, nil
 	}

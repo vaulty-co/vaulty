@@ -8,6 +8,7 @@ import (
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/encrypt"
 	"github.com/vaulty/proxy/proxy"
+	"github.com/vaulty/proxy/secrets"
 	"github.com/vaulty/proxy/storage"
 	"github.com/vaulty/proxy/storage/inmem"
 	"github.com/vaulty/proxy/transform/action"
@@ -34,9 +35,12 @@ var proxyCommand = &cli.Command{
 			return err
 		}
 
+		secretStorage := secrets.NewEphemeralStorage(encrypter)
+
 		loaderOptions := &storage.LoaderOptions{
 			ActionOptions: &action.Options{
-				Encrypter: encrypter,
+				Encrypter:     encrypter,
+				SecretStorage: secretStorage,
 			},
 			Storage: st,
 		}

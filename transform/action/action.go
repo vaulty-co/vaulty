@@ -30,7 +30,18 @@ func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error)
 		}
 		return result, nil
 	case "tokenize":
-		result := &Tokenize{}
+		result := &Tokenize{
+			secretStorage: opts.SecretStorage,
+		}
+		err := mapstructure.Decode(input, result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "detokenize":
+		result := &Detokenize{
+			secretStorage: opts.SecretStorage,
+		}
 		err := mapstructure.Decode(input, result)
 		if err != nil {
 			return nil, err

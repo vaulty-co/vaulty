@@ -1,9 +1,12 @@
 package proxy
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -51,7 +54,7 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
-		err = p.transformer.TransformRequestBody(route, req)
+		err = p.TransformRequestBody(route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
@@ -126,13 +129,59 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 			return res
 		}
 
-		err := p.transformer.TransformResponseBody(ctxUserData(ctx).route, res)
+		err := p.TransformResponseBody(ctxUserData(ctx).route, res)
 		if err != nil {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
 		}
 
 		return res
 	})
+}
+
+func (p *Proxy) TransformRequestBody(route *model.Route, req *http.Request) error {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+
+	for _, tr := range route.RequestTransformations {
+		body, err = tr.Transform(body)
+		if err != nil {
+			return err
+		}
+	}
+
+	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))
+	size := int64(len(body))
+
+	req.Header.Del("Content-Length")
+	req.Body = newBody
+	req.ContentLength = size
+
+	return nil
+}
+
+func (p *Proxy) TransformResponseBody(route *model.Route, res *http.Response) error {
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	for _, tr := range route.ResponseTransformations {
+		body, err = tr.Transform(body)
+		if err != nil {
+			return err
+		}
+	}
+
+	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))
+	size := int64(len(body))
+
+	res.Header.Del("Content-Length")
+	res.Body = newBody
+	res.ContentLength = size
+
+	return nil
 }
 
 func (p *Proxy) HandleConnect() goproxy.HttpsHandler {

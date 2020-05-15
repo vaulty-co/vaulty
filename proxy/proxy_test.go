@@ -18,7 +18,7 @@ import (
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/model"
 	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transformer/test_transformer"
+	"github.com/vaulty/proxy/transform"
 )
 
 type EchoHandler struct{}
@@ -29,15 +29,18 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 var upstream = httptest.NewTLSServer(EchoHandler{})
 
+var fakeTransformer transform.Transformer = transform.TransformerFunc(func(body []byte) ([]byte, error) {
+	return append(body, " transformed"...), nil
+})
+
 func TestInboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
 
-	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 	config.IsSingleVaultMode = false
 
-	ps, err := NewProxy(st, tr, config)
+	ps, err := NewProxy(st, config)
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(ps.server)
@@ -51,12 +54,14 @@ func TestInboundRoute(t *testing.T) {
 	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
-		ID:       "rt1",
-		Type:     model.RouteInbound,
-		Method:   http.MethodPost,
-		Path:     "/tokenize",
-		VaultID:  vault.ID,
-		Upstream: upstream.URL,
+		ID:                      "rt1",
+		Type:                    model.RouteInbound,
+		Method:                  http.MethodPost,
+		Path:                    "/tokenize",
+		VaultID:                 vault.ID,
+		Upstream:                upstream.URL,
+		RequestTransformations:  []transform.Transformer{fakeTransformer},
+		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 
@@ -147,11 +152,10 @@ func TestOutboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
 
-	tr := test_transformer.NewTransformer()
 	config := core.LoadConfig("../config/test.yml")
 	config.IsSingleVaultMode = false
 
-	ps, err := NewProxy(st, tr, config)
+	ps, err := NewProxy(st, config)
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(ps.server)
@@ -166,11 +170,13 @@ func TestOutboundRoute(t *testing.T) {
 	require.NoError(t, err)
 
 	err = st.CreateRoute(&model.Route{
-		ID:      "rt1",
-		Type:    model.RouteOutbound,
-		Method:  http.MethodPost,
-		Path:    upstream.URL + "/tokenize",
-		VaultID: vault.ID,
+		ID:                      "rt1",
+		Type:                    model.RouteOutbound,
+		Method:                  http.MethodPost,
+		Path:                    upstream.URL + "/tokenize",
+		VaultID:                 vault.ID,
+		RequestTransformations:  []transform.Transformer{fakeTransformer},
+		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 

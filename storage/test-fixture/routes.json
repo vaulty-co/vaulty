@@ -11,13 +11,13 @@
 				"request_transformations": [
 					{
 						"type": "json",
-						"expression": "$.card.number",
-						"action": { "type": "conceal" }
+						"expression": "card.number",
+						"action": { "type": "encrypt" }
 					},
 					{
 						"type": "json",
-						"expression": "$.card.cvc",
-						"action": { "type": "conceal" }
+						"expression": "card.cvc",
+						"action": { "type": "encrypt" }
 					}
 				]
 			}
@@ -29,17 +29,16 @@
 				"request_transformations": [
 					{
 						"type": "json",
-						"expression": "$.card.number",
-						"action": { "type": "reveal" }
+						"expression": "card.number",
+						"action": { "type": "encrypt" }
 					},
 					{
 						"type": "json",
-						"expression": "$.card.cvc",
-						"action": { "type": "reveal" }
+						"expression": "card.cvc",
+						"action": { "type": "encrypt" }
 					}
 				]
 			}
 		]
 	}
 }
-

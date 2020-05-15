@@ -11,17 +11,15 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/vaulty/proxy/core"
 	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/transformer"
 )
 
 type Proxy struct {
-	server      *goproxy.ProxyHttpServer
-	storage     storage.Storage
-	transformer transformer.Transformer
-	config      *core.Configuration
+	server  *goproxy.ProxyHttpServer
+	storage storage.Storage
+	config  *core.Configuration
 }
 
-func NewProxy(storage storage.Storage, transformer transformer.Transformer, config *core.Configuration) (*Proxy, error) {
+func NewProxy(storage storage.Storage, config *core.Configuration) (*Proxy, error) {
 	if config.ProxyPassword == "" {
 		return nil, errors.New("Proxy password must be specified via config file or PROXY_PASS environment variable")
 	}
@@ -34,10 +32,9 @@ func NewProxy(storage storage.Storage, transformer transformer.Transformer, conf
 	}
 
 	proxy := &Proxy{
-		server:      server,
-		storage:     storage,
-		transformer: transformer,
-		config:      config,
+		server:  server,
+		storage: storage,
+		config:  config,
 	}
 
 	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

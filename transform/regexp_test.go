@@ -7,19 +7,40 @@ import (
 )
 
 func TestRegexp(t *testing.T) {
+	t.Run("Test building transformer from JSON", func(t *testing.T) {
+		rawJson := []byte(`
+{
+	"type":"regexp",
+	"expression":"\\d{1}(\\d{8})\\d+",
+	"submatch_number":1
+}
+`)
+
+		fakeAction := TransformerFunc(func(body []byte) ([]byte, error) {
+			require.Equal(t, []byte("23456789"), body)
+			return body, nil
+		})
+		transformation, err := transformerFromJSON(rawJson, fakeAction)
+		require.NoError(t, err)
+
+		body := []byte("number 1234567890")
+
+		body, err = transformation.Transform(body)
+	})
+
 	t.Run("Test one submatch", func(t *testing.T) {
 		tr := &Regexp{
 			Expression:     `number: \d(\d+)\d{4}`,
 			SubmatchNumber: 1,
 			Action: TransformerFunc(func(body []byte) ([]byte, error) {
-				return []byte("xxxx"), nil
+				require.Equal(t, []byte("23456"), body)
+				return body, nil
 			}),
 		}
 
-		body := []byte("number: 4242424242424242")
-		newBody, err := tr.Transform(body)
+		body := []byte("number: 1234567890")
+		_, err := tr.Transform(body)
 		require.NoError(t, err)
-		require.Contains(t, string(newBody), "number: 4xxxx4242")
 	})
 
 	t.Run("Test multiple submatch", func(t *testing.T) {
@@ -27,14 +48,14 @@ func TestRegexp(t *testing.T) {
 			Expression:     `number: (\d+)(\d{4})`,
 			SubmatchNumber: 2,
 			Action: TransformerFunc(func(body []byte) ([]byte, error) {
-				return []byte("xxxx"), nil
+				require.Equal(t, []byte("7890"), body)
+				return body, nil
 			}),
 		}
 
-		body := []byte("number: 4242424242424242")
-		newBody, err := tr.Transform(body)
+		body := []byte("number: 1234567890")
+		_, err := tr.Transform(body)
 		require.NoError(t, err)
-		require.Contains(t, string(newBody), "number: 424242424242xxxx")
 	})
 
 	t.Run("Test no submatch", func(t *testing.T) {
@@ -64,4 +85,5 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, string(newBody), "hello")
 	})
+
 }

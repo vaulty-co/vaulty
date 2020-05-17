@@ -24,7 +24,8 @@ func (t *Json) Transform(body []byte) ([]byte, error) {
 	value := result.Str
 	newValue, err := t.Action.Transform([]byte(value))
 	if err != nil {
-		return nil, err
+		// return nil, err
+		return body, nil
 	}
 
 	newBody, err := sjson.SetBytes(body, t.Expression, string(newValue))

@@ -2,12 +2,12 @@ package action
 
 import "github.com/vaulty/proxy/encrypt"
 
-type Encrypt struct {
+type Decrypt struct {
 	enc encrypt.Encrypter
 }
 
-func (a *Encrypt) Transform(body []byte) ([]byte, error) {
-	newBody, err := a.enc.Encrypt(body)
+func (a *Decrypt) Transform(body []byte) ([]byte, error) {
+	newBody, err := a.enc.Decrypt(body)
 	if err != nil {
 		return nil, err
 	}

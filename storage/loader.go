@@ -25,14 +25,26 @@ type routesFile struct {
 	}
 }
 
-func LoadFromFile(file string, storage Storage) error {
+type LoaderOptions struct {
+	ActionOptions *action.Options
+	Storage       Storage
+}
+
+func LoadFromFile(file string, opts *LoaderOptions) error {
 	fileContent, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
 
+	return Load(fileContent, opts)
+}
+
+func Load(rawJson []byte, opts *LoaderOptions) error {
+	storage := opts.Storage
+	actionOptions := opts.ActionOptions
+
 	var input routesFile
-	err = json.Unmarshal(fileContent, &input)
+	err := json.Unmarshal(rawJson, &input)
 	if err != nil {
 		return err
 	}
@@ -41,12 +53,12 @@ func LoadFromFile(file string, storage Storage) error {
 	mapstructure.Decode(input.Vault, &vault)
 	storage.CreateVault(&vault)
 
-	inboundRoutes, err := buildRoutes(input.Routes.Inbound, vault.ID, model.RouteInbound)
+	inboundRoutes, err := buildRoutes(input.Routes.Inbound, vault.ID, model.RouteInbound, actionOptions)
 	if err != nil {
 		return err
 	}
 
-	outboundRoutes, err := buildRoutes(input.Routes.Inbound, vault.ID, model.RouteOutbound)
+	outboundRoutes, err := buildRoutes(input.Routes.Outbound, vault.ID, model.RouteOutbound, actionOptions)
 	if err != nil {
 		return err
 	}
@@ -63,22 +75,22 @@ func LoadFromFile(file string, storage Storage) error {
 	return nil
 }
 
-func buildRoutes(rawRoutes []*route, vaultID string, routesType model.RouteType) ([]*model.Route, error) {
+func buildRoutes(rawRoutes []*route, vaultID string, routesType model.RouteType, actionOptions *action.Options) ([]*model.Route, error) {
 	var routes []*model.Route
 
 	for _, rt := range rawRoutes {
-		requestTransformations, err := buildTransformations(rt.RequestTransformations)
+		requestTransformations, err := buildTransformations(rt.RequestTransformations, actionOptions)
 		if err != nil {
 			return nil, err
 		}
 
-		responseTransformations, err := buildTransformations(rt.ResponseTransformations)
+		responseTransformations, err := buildTransformations(rt.ResponseTransformations, actionOptions)
 		if err != nil {
 			return nil, err
 		}
 
 		route := model.Route{
-			Type:                    model.RouteInbound,
+			Type:                    routesType,
 			VaultID:                 vaultID,
 			RequestTransformations:  requestTransformations,
 			ResponseTransformations: responseTransformations,
@@ -90,11 +102,11 @@ func buildRoutes(rawRoutes []*route, vaultID string, routesType model.RouteType)
 	return routes, nil
 }
 
-func buildTransformations(rawTransformations []map[string]interface{}) ([]transform.Transformer, error) {
+func buildTransformations(rawTransformations []map[string]interface{}, actionOptions *action.Options) ([]transform.Transformer, error) {
 	var transformations []transform.Transformer
 
 	for _, tr := range rawTransformations {
-		action, err := action.Factory(tr["action"])
+		action, err := action.Factory(tr["action"], actionOptions)
 		if err != nil {
 			return nil, err
 		}

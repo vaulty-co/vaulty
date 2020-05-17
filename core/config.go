@@ -15,6 +15,7 @@ type Configuration struct {
 	ProxyPassword     string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
 	RoutesFile        string `default:"~/.vaulty/routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
 	CaPath            string `default:"~/.vaulty" yaml:"ca_path" envconfig:"CA_PATH"`
+	EncryptionKey     string `yaml:"encryption_key" envconfig:"ENCRYPTION_KEY"`
 	IsSingleVaultMode bool
 	Redis             struct {
 		URL string `yaml:"url" envconfig:"REDIS_URL"`

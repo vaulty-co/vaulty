@@ -29,6 +29,15 @@ func Factory(rawInput interface{}, action Transformer) (Transformer, error) {
 			return nil, err
 		}
 		return jsonTransformation, nil
+	case "regexp":
+		regexpTransformation := &Regexp{
+			Action: action,
+		}
+		err := mapstructure.Decode(input, regexpTransformation)
+		if err != nil {
+			return nil, err
+		}
+		return regexpTransformation, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Unknown transformation type %s", input["type"]))
 	}

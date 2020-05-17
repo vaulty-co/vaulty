@@ -44,7 +44,7 @@ In short, all requests to Vaulty will be sent to [http://postman-echo.com](http:
 Now, let's run Vaulty as a proxy:
 
 ```bash
-docker run -p 8080:8080 ./routes.json:/.vaulty/routes.json vaulty proxy 
+docker run -p 8080:8080 -v ${PWD}:/vaulty/.vaulty/ vaulty 
 ```
 
 You should see something like this:

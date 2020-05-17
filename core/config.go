@@ -1,11 +1,16 @@
 package core
 
 import (
+	"crypto/rand"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mitchellh/go-homedir"
+	"github.com/vaulty/proxy/ca"
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,11 +40,17 @@ func LoadConfig(file string) *Configuration {
 	readFile(file, Config)
 	readEnv(Config)
 	expandPaths(Config)
+	setDefaults(Config)
 
 	return Config
 }
 
 func readFile(file string, cfg *Configuration) {
+	if _, err := os.Stat(file); err != nil {
+		fmt.Println("No configuration file found. Read config from ENV")
+		return
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		panic(err)
@@ -71,5 +82,28 @@ func expandPaths(cfg *Configuration) {
 	cfg.RoutesFile, err = homedir.Expand(cfg.RoutesFile)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func setDefaults(cfg *Configuration) {
+	var err error
+
+	if cfg.ProxyPassword == "" {
+		pass := make([]byte, 16)
+		_, err = io.ReadFull(rand.Reader, pass)
+		if err != nil {
+			panic(err)
+		}
+		cfg.ProxyPassword = fmt.Sprintf("%x", pass)
+		fmt.Printf("No password for forward proxy provided (PROXY_PASS)!\nRandom password is used: %s\n", cfg.ProxyPassword)
+	}
+
+	if _, err := os.Stat(filepath.Join(cfg.CaPath, "ca.pem")); err != nil {
+		fmt.Printf("No CA certificate found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
+			cfg.CaPath+"/ca.pem", cfg.CaPath+"/ca.key")
+
+		rootCertPEM, rootKeyPEM := ca.GenCA()
+		ioutil.WriteFile(cfg.CaPath+"/ca.pem", rootCertPEM, 0644)
+		ioutil.WriteFile(cfg.CaPath+"/ca.key", rootKeyPEM, 0644)
 	}
 }

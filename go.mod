@@ -17,7 +17,6 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/rainhq/rain v1.2.1
 	github.com/rogpeppe/gohack v1.0.2 // indirect
 	github.com/rs/xid v1.2.1
 	github.com/stretchr/testify v1.4.0
@@ -27,5 +26,3 @@ require (
 	github.com/urfave/cli/v2 v2.2.0
 	gopkg.in/yaml.v2 v2.2.8
 )
-
-

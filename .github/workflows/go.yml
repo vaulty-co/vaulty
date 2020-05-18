@@ -11,8 +11,15 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+      
+    services:
+      redis:
+        image: redis
+        ports:
+        - 6379:6379
+        options: --entrypoint redis-server
+    
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
@@ -30,4 +37,7 @@ jobs:
       run: go build -v ./...
 
     - name: Test
+      env:
+        CA_PATH: /home/runner 
+        REDIS_URL: redis:${{ job.services.redis.ports[6379] }} 
       run: go test -v ./...

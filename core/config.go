@@ -106,19 +106,13 @@ func setDefaults(cfg *Configuration) {
 		ioutil.WriteFile(cfg.CaPath+"/ca.pem", rootCertPEM, 0644)
 		ioutil.WriteFile(cfg.CaPath+"/ca.key", rootKeyPEM, 0644)
 	}
-
-	if _, err := os.Stat(filepath.Join(cfg.CaPath, "ca.pem")); err != nil {
-		fmt.Printf("No CA certificate found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
-			cfg.CaPath+"/ca.pem", cfg.CaPath+"/ca.key")
-
-	}
 }
 
 func isFileMissed(file string) bool {
 	_, err := os.Stat(file)
 	if err != nil {
-		return false
+		return true
 	}
 
-	return true
+	return false
 }

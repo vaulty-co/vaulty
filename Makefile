@@ -6,3 +6,7 @@ build:
 run:
 	go run ./cmd
 
+image:
+	docker build -t vaulty .
+push:
+	docker push vaulty/vaulty:latest

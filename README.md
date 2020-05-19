@@ -39,7 +39,7 @@ Let's create simple routes.json file with transformation rules just to try Vault
 }
 ```
 
-In short, all requests to Vaulty will be sent to [http://postman-echo.com](http://postman-echo.com) which is echo server and will display all data it receives.
+In short, all requests to Vaulty will be transformed and then send to [http://postman-echo.com](http://postman-echo.com) which is echo server and will display all data it receives.
 
 Now, let's run Vaulty as a proxy:
 

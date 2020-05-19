@@ -98,12 +98,27 @@ func setDefaults(cfg *Configuration) {
 		fmt.Printf("No password for forward proxy provided (PROXY_PASS)!\nRandom password is used: %s\n", cfg.ProxyPassword)
 	}
 
-	if _, err := os.Stat(filepath.Join(cfg.CaPath, "ca.pem")); err != nil {
-		fmt.Printf("No CA certificate found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
+	if isFileMissed(filepath.Join(cfg.CaPath, "ca.pem")) || isFileMissed(filepath.Join(cfg.CaPath, "ca.key")) {
+		fmt.Printf("No CA certificate / key found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
 			cfg.CaPath+"/ca.pem", cfg.CaPath+"/ca.key")
 
 		rootCertPEM, rootKeyPEM := ca.GenCA()
 		ioutil.WriteFile(cfg.CaPath+"/ca.pem", rootCertPEM, 0644)
 		ioutil.WriteFile(cfg.CaPath+"/ca.key", rootKeyPEM, 0644)
 	}
+
+	if _, err := os.Stat(filepath.Join(cfg.CaPath, "ca.pem")); err != nil {
+		fmt.Printf("No CA certificate found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
+			cfg.CaPath+"/ca.pem", cfg.CaPath+"/ca.key")
+
+	}
+}
+
+func isFileMissed(file string) bool {
+	_, err := os.Stat(file)
+	if err != nil {
+		return false
+	}
+
+	return true
 }

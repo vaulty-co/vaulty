@@ -11,6 +11,7 @@ run:
 	go run ./cmd
 
 image:
-	docker build -t vaulty:latest .
+	docker build -t vaulty:${VERSION} .
+
 push:
-	docker push vaulty/vaulty:latest
+	docker push vaulty/vaulty:${VERSION}

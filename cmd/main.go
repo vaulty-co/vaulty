@@ -25,6 +25,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		apiCommand,
 		proxyCommand,
+		versionCommand,
 	}
 
 	if err := app.Run(os.Args); err != nil {

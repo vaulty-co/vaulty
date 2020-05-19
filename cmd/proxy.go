@@ -23,11 +23,19 @@ var proxyCommand = &cli.Command{
 			Aliases: []string{"p"},
 			Value:   "8080",
 		},
+		&cli.StringFlag{
+			Name: "routes-file",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		port := c.String("port")
 		environment := c.String("environment")
 		config := core.LoadConfig(fmt.Sprintf("config/%s.yml", environment))
+
+		if c.IsSet("routes-file") {
+			config.RoutesFile = c.String("routes-file")
+		}
+
 		st := inmem.NewStorage()
 
 		encrypter, err := encrypt.NewEncrypter(config.EncryptionKey)

@@ -30,14 +30,15 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		vault, err := p.findVault(ctx, req)
 		if err != nil {
-			ctx.Warnf(err.Error())
+			fmt.Println("Vault was not found")
 			return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
 		}
 
-		// for inbound requests req contains URL of host where
+		// Setup req.URL to default vault's upstream.
+		// For inbound requests req contains URL of host where
 		// Vault is running e.g. proxy.vaulty.co. To forward
-		// requests to vault's upstream we should set
-		// host, port and user accordingly.
+		// requests to  upstream we should set host, port and
+		// user of upstream.
 		if ctxUserData(ctx).routeType == model.RouteInbound {
 			req.URL.Scheme = vault.UpstreamURL().Scheme
 			req.URL.User = vault.UpstreamURL().User
@@ -46,11 +47,9 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 
 		route, err := p.storage.FindRoute(vault.ID, ctxUserData(ctx).routeType, req)
 		if err == storage.ErrNoRows {
-			ctx.Warnf("Route was not found")
 			return req, nil
 		}
 		if err != nil {
-			ctx.Warnf(err.Error())
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
@@ -60,6 +59,16 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 		}
 
 		ctxUserData(ctx).route = route
+
+		if ctxUserData(ctx).routeType == model.RouteInbound && route.Upstream != "" {
+			upstreamURL := route.UpstreamURL()
+
+			if upstreamURL != nil {
+				req.URL.Scheme = upstreamURL.Scheme
+				req.URL.User = upstreamURL.User
+				req.URL.Host = upstreamURL.Host
+			}
+		}
 
 		return req, nil
 	})

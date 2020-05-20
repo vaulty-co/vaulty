@@ -1,6 +1,8 @@
 package action
 
-import "bytes"
+import (
+	"bytes"
+)
 
 type Mask struct {
 	Symbol []byte

@@ -3,6 +3,7 @@ module github.com/vaulty/proxy
 go 1.13
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
 	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2
 	github.com/go-chi/chi v3.3.2+incompatible

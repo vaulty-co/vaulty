@@ -59,7 +59,6 @@ func TestInboundRoute(t *testing.T) {
 		Method:                  http.MethodPost,
 		Path:                    "/tokenize",
 		VaultID:                 vault.ID,
-		Upstream:                upstream.URL,
 		RequestTransformations:  []transform.Transformer{fakeTransformer},
 		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})

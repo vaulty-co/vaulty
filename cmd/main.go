@@ -12,14 +12,6 @@ func main() {
 		Name:                 "vaulty",
 		Usage:                "Vaulty command line utility",
 		EnableBashCompletion: true,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "environment",
-				Aliases: []string{"e"},
-				Value:   "development",
-				Usage:   "environment",
-			},
-		},
 	}
 
 	app.Commands = []*cli.Command{

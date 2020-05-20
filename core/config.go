@@ -15,10 +15,9 @@ import (
 )
 
 type Configuration struct {
-	Environment       string `yaml:"environment" envconfig:"PROXY_ENV"`
 	BaseHost          string `yaml:"base_host" envconfig:"BASE_HOST"`
 	ProxyPassword     string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
-	RoutesFile        string `default:"~/.vaulty/routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
+	RoutesFile        string `default:"./routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
 	CaPath            string `default:"~/.vaulty" yaml:"ca_path" envconfig:"CA_PATH"`
 	EncryptionKey     string `yaml:"encryption_key" envconfig:"ENCRYPTION_KEY"`
 	IsSingleVaultMode bool
@@ -46,8 +45,8 @@ func LoadConfig(file string) *Configuration {
 }
 
 func readFile(file string, cfg *Configuration) {
-	if _, err := os.Stat(file); err != nil {
-		fmt.Println("No configuration file found. Read config from ENV")
+	if isFileMissed(file) {
+		fmt.Printf("No configuration file %s found... Read from environment variables\n", file)
 		return
 	}
 
@@ -98,13 +97,15 @@ func setDefaults(cfg *Configuration) {
 		fmt.Printf("No password for forward proxy provided (PROXY_PASS)!\nRandom password is used: %s\n", cfg.ProxyPassword)
 	}
 
-	if isFileMissed(filepath.Join(cfg.CaPath, "ca.pem")) || isFileMissed(filepath.Join(cfg.CaPath, "ca.key")) {
+	caCertFile := filepath.Join(cfg.CaPath, "ca.pem")
+	caKeyFile := filepath.Join(cfg.CaPath, "ca.key")
+	if isFileMissed(caCertFile) || isFileMissed(caKeyFile) {
 		fmt.Printf("No CA certificate / key found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",
-			cfg.CaPath+"/ca.pem", cfg.CaPath+"/ca.key")
+			caCertFile, caKeyFile)
 
 		rootCertPEM, rootKeyPEM := ca.GenCA()
-		ioutil.WriteFile(cfg.CaPath+"/ca.pem", rootCertPEM, 0644)
-		ioutil.WriteFile(cfg.CaPath+"/ca.key", rootKeyPEM, 0644)
+		ioutil.WriteFile(caCertFile, rootCertPEM, 0644)
+		ioutil.WriteFile(caKeyFile, rootKeyPEM, 0644)
 	}
 }
 

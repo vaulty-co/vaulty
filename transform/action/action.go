@@ -49,7 +49,7 @@ func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error)
 		return result, nil
 	case "mask":
 		result := &Mask{}
-		err := mapstructure.Decode(input, result)
+		err := mapstructure.WeakDecode(input, result)
 		if err != nil {
 			return nil, err
 		}

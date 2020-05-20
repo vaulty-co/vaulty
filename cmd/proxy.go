@@ -29,8 +29,8 @@ var proxyCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		port := c.String("port")
-		environment := c.String("environment")
-		config := core.LoadConfig(fmt.Sprintf("config/%s.yml", environment))
+		configFile := c.String("config")
+		config := core.LoadConfig(configFile)
 
 		if c.IsSet("routes-file") {
 			config.RoutesFile = c.String("routes-file")
@@ -63,7 +63,7 @@ var proxyCommand = &cli.Command{
 			return err
 		}
 
-		fmt.Printf("==> Vaulty proxy server started on port %v! in %v environment\n", port, environment)
+		fmt.Printf("==> Vaulty proxy server started on port %v!\n", port)
 		err = http.ListenAndServe(":"+port, proxy)
 		return err
 	},

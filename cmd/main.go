@@ -14,10 +14,10 @@ func main() {
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "environment",
-				Aliases: []string{"e"},
-				Value:   "development",
-				Usage:   "environment",
+				Name:    "config",
+				Aliases: []string{"c"},
+				Value:   "vaulty.yml",
+				Usage:   "Vaulty configuration file",
 			},
 		},
 	}

@@ -22,14 +22,15 @@ var apiCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		port := c.String("port")
-		environment := c.String("environment")
-		config := core.LoadConfig(fmt.Sprintf("config/%s.yml", environment))
+		configFile := c.String("config")
+		config := core.LoadConfig(configFile)
+
 		redisClient := core.NewRedisClient(config)
 		storage := storage.NewRedisStorage(redisClient)
 
 		server := api.NewServer(storage)
 
-		fmt.Printf("==> Vaulty API server started on port %v! in %v environment\n", port, environment)
+		fmt.Printf("==> Vaulty API server started on port %v!", port)
 		err := http.ListenAndServe(":"+port, server)
 		return err
 	},

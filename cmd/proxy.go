@@ -19,6 +19,12 @@ var proxyCommand = &cli.Command{
 	Usage: "run proxy server",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Value:   "vaulty.yml",
+			Usage:   "Vaulty configuration file",
+		},
+		&cli.StringFlag{
 			Name:    "port",
 			Aliases: []string{"p"},
 			Value:   "8080",

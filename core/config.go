@@ -15,10 +15,9 @@ import (
 )
 
 type Configuration struct {
-	Environment       string `yaml:"environment" envconfig:"PROXY_ENV"`
 	BaseHost          string `yaml:"base_host" envconfig:"BASE_HOST"`
 	ProxyPassword     string `yaml:"proxy_pass" envconfig:"PROXY_PASS"`
-	RoutesFile        string `default:"~/.vaulty/routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
+	RoutesFile        string `default:"./routes.json" yaml:"routes_file" envconfig:"ROUTES_FILE"`
 	CaPath            string `default:"~/.vaulty" yaml:"ca_path" envconfig:"CA_PATH"`
 	EncryptionKey     string `yaml:"encryption_key" envconfig:"ENCRYPTION_KEY"`
 	IsSingleVaultMode bool

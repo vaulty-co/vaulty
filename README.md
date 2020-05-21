@@ -9,12 +9,12 @@ Vaulty is a reverse and forward proxy that modifies (encrypt, decrypt, tokenize,
 Vaulty can be used for the following:
 
 - Anonymize data before it reaches your APIs and backends
-- Get encryption / decryption for your APIs without changing a line of code
-- Provide filtered data for specific group of users like support stuff, etc.
+- Get encryption/decryption for your APIs without changing a line of code
+- Provide filtered data for a specific group of users like support staff, etc.
 - Tokenize credit cards, SSNs, etc. for companies that are PCI compliant
-- Encrypt your customers data when you import this data from 3d party services (access tokens, PII, etc.)
+- Encrypt your customers' data when you import this data from 3d party services (access tokens, PII, etc.)
 
-Currently you can play with Vaulty, think how you would like to use it and share your ideas and feedback so we can make it work. It's not ready for production yet.
+Currently you can play with Vaulty, think about how you would like to use it, and [share your ideas and feedback](https://github.com/vaulty-co/vaulty/issues) so we can make it work for you. It's not ready for production yet.
 
 ## Prerequisites
 

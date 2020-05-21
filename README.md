@@ -1,7 +1,12 @@
 ![](https://github.com/vaulty-co/vaulty/workflows/Go/badge.svg)
+
 # Vaulty
 
-Vaulty is a reverse and forward proxy that modifies (encrypt, decrypt, tokenize, etc.) data on the fly and securely stores it in a safe. Vaulty can be used for the following:
+Vaulty is a reverse and forward proxy that modifies (encrypt, decrypt, tokenize, etc.) HTTP(s) data on the fly and securely stores it in a safe.
+
+![](https://vaulty.co/img/flow.svg)
+
+Vaulty can be used for the following:
 
 - Anonymize data before it reaches your APIs and backends
 - Get encryption / decryption for your APIs without changing a line of code

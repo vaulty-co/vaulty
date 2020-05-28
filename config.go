@@ -47,7 +47,7 @@ func (c *Config) GenerateMissedValues() error {
 		fmt.Printf("No password for forward proxy provided (PROXY_PASS)!\nRandom password is used: %s\n", c.ProxyPassword)
 	}
 
-	caCertFile := filepath.Join(c.CAPath, "ca.pem")
+	caCertFile := filepath.Join(c.CAPath, "ca.cert")
 	caKeyFile := filepath.Join(c.CAPath, "ca.key")
 	if isFileMissed(caCertFile) || isFileMissed(caKeyFile) {
 		fmt.Printf("No CA certificate / key found (in CA_PATH).\nGenerate CA cert: %s\nCA private key: %s\n",

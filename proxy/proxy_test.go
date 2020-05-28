@@ -181,7 +181,7 @@ func TestOutboundRoute(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	caCert, err := ioutil.ReadFile(filepath.Join(opts.CAPath, "ca.pem"))
+	caCert, err := ioutil.ReadFile(filepath.Join(opts.CAPath, "ca.cert"))
 	require.NoError(t, err)
 
 	caCertPool := x509.NewCertPool()

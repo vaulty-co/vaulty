@@ -67,7 +67,7 @@ func NewProxy(opts *Options) (*Proxy, error) {
 }
 
 func setupCA(CAPath string) error {
-	caCert, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.pem"))
+	caCert, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.cert"))
 	if err != nil {
 		return err
 	}

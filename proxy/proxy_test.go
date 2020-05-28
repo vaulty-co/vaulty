@@ -15,10 +15,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transform"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage/inmem"
+	"github.com/vaulty/vaulty/transform"
 )
 
 type EchoHandler struct{}
@@ -37,10 +36,12 @@ func TestInboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
 
-	config := core.LoadConfig("../config/test.yml")
-	config.IsSingleVaultMode = false
+	opts := &Options{
+		CAPath:  "./testdata",
+		Storage: st,
+	}
 
-	ps, err := NewProxy(st, config)
+	ps, err := NewProxy(opts)
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(ps.server)
@@ -101,6 +102,8 @@ func TestInboundRoute(t *testing.T) {
 	})
 
 	t.Run("Test request is rejected when no vault found", func(t *testing.T) {
+		ps.IsSingleVaultMode = false
+
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/pass", bytes.NewBufferString("request"))
 		req.Host = "vltunknown.proxy.test"
 
@@ -123,11 +126,7 @@ func TestInboundRoute(t *testing.T) {
 	})
 
 	t.Run("Test single vault mode ignores host name", func(t *testing.T) {
-		prevValue := config.IsSingleVaultMode
-		defer func() {
-			config.IsSingleVaultMode = prevValue
-		}()
-		config.IsSingleVaultMode = true
+		ps.IsSingleVaultMode = true
 
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/noroute", bytes.NewBufferString("request"))
 		req.Host = "localhost"
@@ -151,10 +150,13 @@ func TestOutboundRoute(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
 
-	config := core.LoadConfig("../config/test.yml")
-	config.IsSingleVaultMode = false
+	opts := &Options{
+		CAPath:        "./testdata",
+		Storage:       st,
+		ProxyPassword: "pass",
+	}
 
-	ps, err := NewProxy(st, config)
+	ps, err := NewProxy(opts)
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(ps.server)
@@ -179,7 +181,7 @@ func TestOutboundRoute(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+	caCert, err := ioutil.ReadFile(filepath.Join(opts.CAPath, "ca.pem"))
 	require.NoError(t, err)
 
 	caCertPool := x509.NewCertPool()
@@ -213,7 +215,7 @@ func TestOutboundRoute(t *testing.T) {
 
 		// setup user:password for proxyURL to pass basic auth
 		proxyURL, _ := url.Parse(proxy.URL)
-		proxyURL.User = url.UserPassword(vault.ID, config.ProxyPassword)
+		proxyURL.User = url.UserPassword(vault.ID, opts.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
@@ -238,18 +240,17 @@ func TestOutboundRoute(t *testing.T) {
 	})
 
 	t.Run("Test single vault mode request and response body transformation when route matches", func(t *testing.T) {
-		prevValue := config.IsSingleVaultMode
 		defer func() {
-			config.IsSingleVaultMode = prevValue
+			ps.IsSingleVaultMode = false
 		}()
-		config.IsSingleVaultMode = true
+		ps.IsSingleVaultMode = true
 
 		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
 
 		// basic auth password "x" should not be treated as vault ID
 		// in signle vault mode
 		proxyURL, _ := url.Parse(proxy.URL)
-		proxyURL.User = url.UserPassword("x", config.ProxyPassword)
+		proxyURL.User = url.UserPassword("x", opts.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {

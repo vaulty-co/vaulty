@@ -13,8 +13,8 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/elazarl/goproxy/ext/auth"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
 )
 
 func (p *Proxy) SetRouteType() goproxy.ReqHandler {
@@ -80,8 +80,7 @@ func (p *Proxy) findVault(ctx *goproxy.ProxyCtx, req *http.Request) (*model.Vaul
 		err     error
 	)
 
-	// just return first vault if IsSingleVaultMode set
-	if p.config.IsSingleVaultMode {
+	if p.IsSingleVaultMode {
 		vaults, err := p.storage.ListVaults()
 		if err != nil {
 			return nil, err
@@ -95,7 +94,7 @@ func (p *Proxy) findVault(ctx *goproxy.ProxyCtx, req *http.Request) (*model.Vaul
 	}
 
 	if ctxUserData(ctx).routeType == model.RouteInbound {
-		vaultID, err = getVaultIDFromHost(p.config.BaseHost, req.Host)
+		vaultID, err = getVaultIDFromHost(p.baseHost, req.Host)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +196,7 @@ func (p *Proxy) HandleConnect() goproxy.HttpsHandler {
 	return goproxy.FuncHttpsHandler(func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 		vaultID, password, ok := proxyAuth(ctx.Req)
 
-		if !ok || password != p.config.ProxyPassword {
+		if !ok || password != p.proxyPassword {
 			ctx.Resp = auth.BasicUnauthorized(ctx.Req, "")
 			return goproxy.RejectConnect, host
 		}

@@ -7,18 +7,20 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage/inmem"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage/inmem"
 )
 
 func TestHandleRequest(t *testing.T) {
 	st := inmem.NewStorage()
 	defer st.Reset()
 
-	config := core.LoadConfig("../config/test.yml")
+	opts := &Options{
+		CAPath:  "./testdata",
+		Storage: st,
+	}
 
-	proxy, err := NewProxy(st, config)
+	proxy, err := NewProxy(opts)
 	require.NoError(t, err)
 
 	vault := &model.Vault{

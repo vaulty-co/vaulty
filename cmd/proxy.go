@@ -2,75 +2,60 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+
+	log "github.com/sirupsen/logrus"
+	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 
 	"github.com/urfave/cli/v2"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/encrypt"
-	"github.com/vaulty/proxy/proxy"
-	"github.com/vaulty/proxy/secrets"
-	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transform/action"
+	vaulty "github.com/vaulty/vaulty"
 )
+
+var config = vaulty.NewConfig()
 
 var proxyCommand = &cli.Command{
 	Name:  "proxy",
 	Usage: "run proxy server",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:    "config",
-			Aliases: []string{"c"},
-			Value:   "vaulty.yml",
-			Usage:   "Vaulty configuration file",
+			Name:        "address, a",
+			Value:       ":8080",
+			Usage:       "address that vaulty should listen on",
+			Destination: &config.Address,
 		},
 		&cli.StringFlag{
-			Name:    "port",
-			Aliases: []string{"p"},
-			Value:   "8080",
+			Name:        "routes-file, r",
+			Value:       "./routes.json",
+			Usage:       "routes file",
+			Destination: &config.RoutesFile,
 		},
 		&cli.StringFlag{
-			Name: "routes-file",
+			Name:        "ca-path, ca",
+			Value:       "./",
+			Usage:       "path to CA key and cert",
+			Destination: &config.CAPath,
+		},
+		&cli.StringFlag{
+			Name:        "proxy-pass, p",
+			Usage:       "forward proxy password",
+			EnvVars:     []string{"PROXY_PASS"},
+			Destination: &config.ProxyPassword,
+		},
+		&cli.StringFlag{
+			Name:        "key, k",
+			Usage:       "forward proxy password",
+			EnvVars:     []string{"ENCRYPTION_KEY"},
+			Destination: &config.EncryptionKey,
 		},
 	},
 	Action: func(c *cli.Context) error {
-		port := c.String("port")
-		configFile := c.String("config")
-		config := core.LoadConfig(configFile)
+		log.SetFormatter(&prefixed.TextFormatter{
+			FullTimestamp: true,
+		})
 
-		if c.IsSet("routes-file") {
-			config.RoutesFile = c.String("routes-file")
+		if err := config.GenerateMissedValues(); err != nil {
+			return fmt.Errorf("Error with generating missed values: %s", err)
 		}
 
-		st := inmem.NewStorage()
-
-		encrypter, err := encrypt.NewEncrypter(config.EncryptionKey)
-		if err != nil {
-			return err
-		}
-
-		secretStorage := secrets.NewEphemeralStorage(encrypter)
-
-		loaderOptions := &storage.LoaderOptions{
-			ActionOptions: &action.Options{
-				Encrypter:     encrypter,
-				SecretStorage: secretStorage,
-			},
-			Storage: st,
-		}
-
-		err = storage.LoadFromFile(config.RoutesFile, loaderOptions)
-		if err != nil {
-			return err
-		}
-
-		proxy, err := proxy.NewProxy(st, config)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("==> Vaulty proxy server started on port %v!\n", port)
-		err = http.ListenAndServe(":"+port, proxy)
-		return err
+		return vaulty.Run(config)
 	},
 }

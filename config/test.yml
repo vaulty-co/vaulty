@@ -1,6 +1,0 @@
-environment: test
-base_host: proxy.test
-proxy_pass: pass123
-redis:
-  url: redis://localhost/1
-# ca_path: 

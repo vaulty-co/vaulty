@@ -5,9 +5,8 @@ import (
 	"net/http"
 
 	"github.com/urfave/cli/v2"
-	"github.com/vaulty/proxy/api"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/api"
+	"github.com/vaulty/vaulty/storage/inmem"
 )
 
 var apiCommand = &cli.Command{
@@ -28,12 +27,8 @@ var apiCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		port := c.String("port")
-		configFile := c.String("config")
-		config := core.LoadConfig(configFile)
 
-		redisClient := core.NewRedisClient(config)
-		storage := storage.NewRedisStorage(redisClient)
-
+		storage := inmem.NewStorage()
 		server := api.NewServer(storage)
 
 		fmt.Printf("==> Vaulty API server started on port %v!", port)

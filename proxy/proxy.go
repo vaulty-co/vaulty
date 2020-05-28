@@ -3,38 +3,51 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
 
 	"github.com/elazarl/goproxy"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/storage"
 )
 
-type Proxy struct {
-	server  *goproxy.ProxyHttpServer
-	storage storage.Storage
-	config  *core.Configuration
+type Options struct {
+	// Password for the forward proxy
+	ProxyPassword string
+
+	// Path to CA files
+	CAPath string
+
+	// router with all routes
+	Storage storage.Storage
 }
 
-func NewProxy(storage storage.Storage, config *core.Configuration) (*Proxy, error) {
-	if config.ProxyPassword == "" {
-		return nil, errors.New("Proxy password must be specified via config file or PROXY_PASS environment variable")
-	}
+type Proxy struct {
+	proxyPassword string
+	server        *goproxy.ProxyHttpServer
+	storage       storage.Storage
 
+	// remove this
+	baseHost          string
+	IsSingleVaultMode bool
+}
+
+func NewProxy(opts *Options) (*Proxy, error) {
 	server := goproxy.NewProxyHttpServer()
 
-	err := setupCA(config)
+	err := setupCA(opts.CAPath)
 	if err != nil {
 		return nil, err
 	}
 
 	proxy := &Proxy{
-		server:  server,
-		storage: storage,
-		config:  config,
+		server:        server,
+		storage:       opts.Storage,
+		proxyPassword: opts.ProxyPassword,
+
+		// we should get rid of this
+		baseHost:          "proxy.vaulty.co",
+		IsSingleVaultMode: true,
 	}
 
 	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -53,13 +66,13 @@ func NewProxy(storage storage.Storage, config *core.Configuration) (*Proxy, erro
 	return proxy, nil
 }
 
-func setupCA(config *core.Configuration) error {
-	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+func setupCA(CAPath string) error {
+	caCert, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.pem"))
 	if err != nil {
 		return err
 	}
 
-	caKey, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.key"))
+	caKey, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.key"))
 	if err != nil {
 		return err
 	}

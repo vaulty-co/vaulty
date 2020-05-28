@@ -3,7 +3,7 @@ package request
 import (
 	"context"
 
-	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/vaulty/model"
 )
 
 type key int

@@ -2,7 +2,7 @@ package action
 
 import (
 	"github.com/rs/xid"
-	"github.com/vaulty/proxy/secrets"
+	"github.com/vaulty/vaulty/secrets"
 )
 
 type Tokenize struct {

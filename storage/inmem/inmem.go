@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
 )
 
 type inmemStorage struct {

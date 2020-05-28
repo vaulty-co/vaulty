@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
 )
 
 func TestWithRoute(t *testing.T) {

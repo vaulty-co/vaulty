@@ -2,7 +2,7 @@ package proxy
 
 import (
 	"github.com/elazarl/goproxy"
-	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/vaulty/model"
 )
 
 type userData struct {

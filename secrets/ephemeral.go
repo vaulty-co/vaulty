@@ -1,6 +1,6 @@
 package secrets
 
-import "github.com/vaulty/proxy/encrypt"
+import "github.com/vaulty/vaulty/encrypt"
 
 type ephemeral struct {
 	enc  encrypt.Encrypter

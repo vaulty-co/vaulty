@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/transform"
-	"github.com/vaulty/proxy/transform/action"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/transform"
+	"github.com/vaulty/vaulty/transform/action"
 )
 
 type route struct {

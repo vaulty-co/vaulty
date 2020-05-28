@@ -10,10 +10,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/api/request"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/storage/inmem"
+	"github.com/vaulty/vaulty/api/request"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
+	"github.com/vaulty/vaulty/storage/inmem"
 )
 
 func TestHandleVaultCreate(t *testing.T) {

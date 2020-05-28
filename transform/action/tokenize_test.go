@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/encrypt"
-	"github.com/vaulty/proxy/secrets"
+	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/secrets"
 )
 
 func TestTokenizeDetokenize(t *testing.T) {

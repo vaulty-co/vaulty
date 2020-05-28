@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/storage"
-	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transform/action"
+	"github.com/vaulty/vaulty/storage"
+	"github.com/vaulty/vaulty/storage/inmem"
+	"github.com/vaulty/vaulty/transform/action"
 )
 
 func TestLoadFromFile(t *testing.T) {

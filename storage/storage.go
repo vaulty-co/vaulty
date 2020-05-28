@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/vaulty/model"
 )
 
 var (

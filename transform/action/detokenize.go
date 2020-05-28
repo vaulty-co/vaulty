@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/vaulty/proxy/secrets"
+	"github.com/vaulty/vaulty/secrets"
 )
 
 type Detokenize struct {

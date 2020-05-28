@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/vaulty/proxy/api/render"
-	"github.com/vaulty/proxy/api/request"
-	"github.com/vaulty/proxy/model"
+	"github.com/vaulty/vaulty/api/render"
+	"github.com/vaulty/vaulty/api/request"
+	"github.com/vaulty/vaulty/model"
 )
 
 type vaultInput struct {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vaulty/proxy/transform"
+	"github.com/vaulty/vaulty/transform"
 )
 
 func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error) {

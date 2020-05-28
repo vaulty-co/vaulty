@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/rs/xid"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
 )
 
 func (s *inmemStorage) CreateVault(vault *model.Vault) error {

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/storage"
 )
 
 type Server struct {

@@ -6,8 +6,8 @@ import (
 	"net/url"
 
 	"github.com/rs/xid"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/storage"
 )
 
 func (s *inmemStorage) CreateRoute(route *model.Route) error {

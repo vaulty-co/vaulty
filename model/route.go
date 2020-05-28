@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/vaulty/proxy/transform"
+	"github.com/vaulty/vaulty/transform"
 )
 
 type Route struct {

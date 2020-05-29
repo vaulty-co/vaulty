@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/elazarl/goproxy"
-	"github.com/vaulty/vaulty/storage"
+	"github.com/vaulty/vaulty/routing"
 )
 
 type Options struct {
@@ -19,17 +19,13 @@ type Options struct {
 	CAPath string
 
 	// router with all routes
-	Storage storage.Storage
+	Router routing.Router
 }
 
 type Proxy struct {
 	proxyPassword string
 	server        *goproxy.ProxyHttpServer
-	storage       storage.Storage
-
-	// remove this
-	baseHost          string
-	IsSingleVaultMode bool
+	router        routing.Router
 }
 
 func NewProxy(opts *Options) (*Proxy, error) {
@@ -42,23 +38,18 @@ func NewProxy(opts *Options) (*Proxy, error) {
 
 	proxy := &Proxy{
 		server:        server,
-		storage:       opts.Storage,
+		router:        opts.Router,
 		proxyPassword: opts.ProxyPassword,
-
-		// we should get rid of this
-		baseHost:          "proxy.vaulty.co",
-		IsSingleVaultMode: true,
 	}
 
 	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// set host for inbound requests
 		req.URL.Scheme = "https"
-		req.URL.Host = "inbound-request"
-
+		req.URL.Host = "inbound"
 		server.ServeHTTP(w, req)
 	})
 
 	server.OnRequest().HandleConnect(proxy.HandleConnect())
-	server.OnRequest().Do(proxy.SetRouteType())
 	server.OnRequest().Do(proxy.HandleRequest())
 	server.OnResponse().Do(proxy.HandleResponse())
 	server.Verbose = true

@@ -6,6 +6,6 @@ import (
 )
 
 type Options struct {
-	Encrypter     encrypt.Encrypter
-	SecretStorage secrets.SecretStorage
+	Encrypter      encrypt.Encrypter
+	SecretsStorage secrets.SecretsStorage
 }

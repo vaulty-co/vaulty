@@ -88,3 +88,24 @@ func (r *Route) Match(req *http.Request) bool {
 
 	return urlMatch && (r.method == "*" || req.Method == r.method)
 }
+
+func (r *Route) TransformRequest(body []byte) ([]byte, error) {
+	return Transform(body, r.requestTransformations)
+}
+
+func (r *Route) TransformResponse(body []byte) ([]byte, error) {
+	return Transform(body, r.responseTransformations)
+}
+
+func Transform(body []byte, transformations []transform.Transformer) ([]byte, error) {
+	var err error
+
+	for _, tr := range transformations {
+		body, err = tr.Transform(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return body, nil
+}

@@ -2,14 +2,11 @@ package proxy
 
 import (
 	"github.com/elazarl/goproxy"
-	"github.com/vaulty/vaulty/model"
+	"github.com/vaulty/vaulty/routing"
 )
 
 type userData struct {
-	vault     *model.Vault
-	route     *model.Route
-	routeType model.RouteType
-	vaultID   string
+	route *routing.Route
 }
 
 func ctxUserData(ctx *goproxy.ProxyCtx) *userData {

@@ -5,11 +5,11 @@ import (
 )
 
 type Detokenize struct {
-	secretStorage secrets.SecretStorage
+	secretsStorage secrets.SecretsStorage
 }
 
 func (a *Detokenize) Transform(token []byte) ([]byte, error) {
-	val, err := a.secretStorage.Get(string(token))
+	val, err := a.secretsStorage.Get(string(token))
 	if err != nil {
 		return nil, err
 	}

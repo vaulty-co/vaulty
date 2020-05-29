@@ -6,40 +6,34 @@ import (
 
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/proxy"
+	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
-	"github.com/vaulty/vaulty/storage"
-	"github.com/vaulty/vaulty/storage/inmem"
-	"github.com/vaulty/vaulty/transform/action"
 )
 
 func Run(config *Config) error {
-	// functionality that goes to router
-	st := inmem.NewStorage()
-
 	encrypter, err := encrypt.NewEncrypter(config.EncryptionKey)
 	if err != nil {
 		return err
 	}
 
-	secretStorage := secrets.NewEphemeralStorage(encrypter)
+	secretsStorage := secrets.NewEphemeralStorage(encrypter)
 
-	loaderOptions := &storage.LoaderOptions{
-		ActionOptions: &action.Options{
-			Encrypter:     encrypter,
-			SecretStorage: secretStorage,
-		},
-		Storage: st,
-	}
-
-	err = storage.LoadFromFile(config.RoutesFile, loaderOptions)
+	// Create router and load routes from file into router
+	loader := routing.NewFileLoader(encrypter, secretsStorage)
+	routes, err := loader.Load(config.RoutesFile)
 	if err != nil {
 		return err
 	}
+	if len(routes) == 0 {
+		return fmt.Errorf("No routes were loaded from file: %s", config.RoutesFile)
+	}
+	router := routing.NewRouter()
+	router.SetRoutes(routes)
 
 	proxy, err := proxy.NewProxy(&proxy.Options{
 		ProxyPassword: config.ProxyPassword,
 		CAPath:        config.CAPath,
-		Storage:       st,
+		Router:        router,
 	})
 	if err != nil {
 		return err

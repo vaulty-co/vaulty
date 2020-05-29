@@ -12,19 +12,19 @@ func TestTokenizeDetokenize(t *testing.T) {
 	encrypter, err := encrypt.NewEncrypter("")
 	require.NoError(t, err)
 
-	secretStorage := secrets.NewEphemeralStorage(encrypter)
+	secretsStorage := secrets.NewEphemeralStorage(encrypter)
 
 	plaintext := []byte("hello")
 
 	tokenize := &Tokenize{
-		secretStorage: secretStorage,
+		secretsStorage: secretsStorage,
 	}
 	token, err := tokenize.Transform(plaintext)
 	require.NoError(t, err)
 	require.Contains(t, string(token), "tok")
 
 	detokenize := &Detokenize{
-		secretStorage: secretStorage,
+		secretsStorage: secretsStorage,
 	}
 	got, err := detokenize.Transform(token)
 	require.NoError(t, err)

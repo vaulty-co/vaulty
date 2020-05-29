@@ -7,7 +7,7 @@ type ephemeral struct {
 	data map[string][]byte
 }
 
-func NewEphemeralStorage(enc encrypt.Encrypter) SecretStorage {
+func NewEphemeralStorage(enc encrypt.Encrypter) SecretsStorage {
 	return &ephemeral{
 		data: make(map[string][]byte),
 		enc:  enc,

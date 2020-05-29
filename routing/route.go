@@ -45,12 +45,16 @@ func NewRoute(params *RouteParams) (*Route, error) {
 		return nil, err
 	}
 
+	route.IsInbound = !route.url.IsAbs()
+
+	if route.IsInbound && params.Upstream == "" {
+		return nil, fmt.Errorf("Missed Upstream for inbound route %s", params.Name)
+	}
+
 	route.UpstreamURL, err = url.Parse(params.Upstream)
 	if err != nil {
 		return nil, err
 	}
-
-	route.IsInbound = !route.url.IsAbs()
 
 	return route, nil
 }

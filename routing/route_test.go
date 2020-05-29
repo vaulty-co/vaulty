@@ -11,8 +11,9 @@ import (
 func TestMatch(t *testing.T) {
 	t.Run("Test inbound route for specific path", func(t *testing.T) {
 		route, err := NewRoute(&RouteParams{
-			Method: "POST",
-			URL:    "/tokenize",
+			Method:   "POST",
+			URL:      "/tokenize",
+			Upstream: "http://backend",
 		})
 		require.NoError(t, err)
 
@@ -22,8 +23,9 @@ func TestMatch(t *testing.T) {
 
 	t.Run("Test inbound route for all requests", func(t *testing.T) {
 		route, err := NewRoute(&RouteParams{
-			Method: "*",
-			URL:    "/*",
+			Method:   "*",
+			URL:      "/*",
+			Upstream: "http://backend",
 		})
 		require.NoError(t, err)
 
@@ -39,6 +41,15 @@ func TestMatch(t *testing.T) {
 		require.NoError(t, err)
 
 		req := httptest.NewRequest("POST", "https://api.stripe.com/tokenize", nil)
+		require.True(t, route.Match(req))
+
+		route, err = NewRoute(&RouteParams{
+			Method: "POST",
+			URL:    "https://postman-echo.com/post",
+		})
+		require.NoError(t, err)
+
+		req = httptest.NewRequest("POST", "https://postman-echo.com/post", nil)
 		require.True(t, route.Match(req))
 	})
 
@@ -80,7 +91,8 @@ func TestIsInbound(t *testing.T) {
 	for _, tt := range routeTests {
 		t.Run(tt.url, func(t *testing.T) {
 			route, err := NewRoute(&RouteParams{
-				URL: tt.url,
+				URL:      tt.url,
+				Upstream: "http://backend",
 			})
 
 			require.NoError(t, err)

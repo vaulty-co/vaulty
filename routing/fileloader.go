@@ -21,8 +21,10 @@ type routeDef struct {
 }
 
 type fileDef struct {
-	Options map[string]interface{}
-	Routes  []*routeDef
+	Options struct {
+		DefaultUpstream string `json:"default_upstream"`
+	}
+	Routes []*routeDef
 }
 
 type fileLoader struct {
@@ -73,6 +75,10 @@ func (l *fileLoader) Load(filename string) ([]*Route, error) {
 		}
 
 		mapstructure.Decode(rd, &routeParams)
+
+		if routeParams.Upstream == "" {
+			routeParams.Upstream = input.Options.DefaultUpstream
+		}
 
 		route, err := NewRoute(&routeParams)
 		if err != nil {

@@ -9,8 +9,9 @@ import (
 
 func TestLookupRoute(t *testing.T) {
 	in, err := NewRoute(&RouteParams{
-		Method: "POST",
-		URL:    "/tokenize",
+		Method:   "POST",
+		URL:      "/tokenize",
+		Upstream: "http://backend",
 	})
 	require.NoError(t, err)
 
@@ -23,10 +24,7 @@ func TestLookupRoute(t *testing.T) {
 	router := NewRouter()
 	router.SetRoutes([]*Route{in, out})
 
-	req := httptest.NewRequest("POST", "/tokenize", nil)
-	require.Equal(t, in, router.LookupRoute(req))
-
-	req = httptest.NewRequest("POST", "https://inbound/tokenize", nil)
+	req := httptest.NewRequest("POST", "https://inbound/tokenize", nil)
 	require.Equal(t, in, router.LookupRoute(req))
 
 	req = httptest.NewRequest("POST", "https://example.com/tokenize", nil)

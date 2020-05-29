@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/elazarl/goproxy"
+	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/routing"
 )
 
@@ -42,6 +43,7 @@ func NewProxy(opts *Options) (*Proxy, error) {
 		proxyPassword: opts.ProxyPassword,
 	}
 
+	server.Logger = log.StandardLogger()
 	server.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// set host for inbound requests
 		req.URL.Scheme = "https"

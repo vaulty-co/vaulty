@@ -10,6 +10,7 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/elazarl/goproxy/ext/auth"
+	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/routing"
 )
 
@@ -21,6 +22,8 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 		if route == nil {
 			return nil, errResponse(req, "No route found", http.StatusNotFound)
 		}
+
+		log.Debugf("Route found: %s", route.Name)
 
 		if route.IsInbound {
 			req.URL.Scheme = route.UpstreamURL.Scheme

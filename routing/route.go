@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -72,8 +73,18 @@ func (r *Route) Match(req *http.Request) bool {
 		matchingURL.Path = req.URL.Path
 	} else {
 		matchingURL = &url.URL{}
+		// for CONNECT target URI is not absolute url
+		// so goproxy builds URL by using authority-form (HOST:PORT)
+		// as request.Host. For https/443 we will remove port from
+		// matchingURL.Host. If other port is specified, then it should
+		// be used in route.url as well
+		if req.URL.Port() == "443" && req.URL.Scheme == "https" {
+			matchingURL.Host = req.URL.Hostname()
+		} else {
+			matchingURL.Host = req.URL.Host
+		}
+
 		matchingURL.Scheme = req.URL.Scheme
-		matchingURL.Host = req.URL.Host
 		matchingURL.Path = req.URL.Path
 	}
 

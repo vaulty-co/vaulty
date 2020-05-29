@@ -1,15 +1,15 @@
 package action
 
 import (
-	"github.com/vaulty/proxy/secrets"
+	"github.com/vaulty/vaulty/secrets"
 )
 
 type Detokenize struct {
-	secretStorage secrets.SecretStorage
+	secretsStorage secrets.SecretsStorage
 }
 
 func (a *Detokenize) Transform(token []byte) ([]byte, error) {
-	val, err := a.secretStorage.Get(string(token))
+	val, err := a.secretsStorage.Get(string(token))
 	if err != nil {
 		return nil, err
 	}

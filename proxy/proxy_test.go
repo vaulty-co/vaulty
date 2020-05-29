@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,10 +14,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/core"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage/inmem"
-	"github.com/vaulty/proxy/transform"
+	"github.com/vaulty/vaulty/routing"
+	"github.com/vaulty/vaulty/transform"
 )
 
 type EchoHandler struct{}
@@ -34,39 +31,32 @@ var fakeTransformer transform.Transformer = transform.TransformerFunc(func(body 
 })
 
 func TestInboundRoute(t *testing.T) {
-	st := inmem.NewStorage()
-	defer st.Reset()
-
-	config := core.LoadConfig("../config/test.yml")
-	config.IsSingleVaultMode = false
-
-	ps, err := NewProxy(st, config)
-	require.NoError(t, err)
-
-	proxy := httptest.NewServer(ps.server)
-	defer proxy.Close()
-
-	vault := &model.Vault{
-		ID:       "vlt1",
-		Upstream: upstream.URL,
-	}
-	err = st.CreateVault(vault)
-	require.NoError(t, err)
-
-	err = st.CreateRoute(&model.Route{
-		ID:                      "rt1",
-		Type:                    model.RouteInbound,
+	route, err := routing.NewRoute(&routing.RouteParams{
+		Name:                    "in",
 		Method:                  http.MethodPost,
-		Path:                    "/tokenize",
-		VaultID:                 vault.ID,
+		URL:                     "/tokenize",
+		Upstream:                upstream.URL,
 		RequestTransformations:  []transform.Transformer{fakeTransformer},
 		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 
+	router := routing.NewRouter()
+	router.SetRoutes([]*routing.Route{route})
+
+	opts := &Options{
+		CAPath: "./testdata",
+		Router: router,
+	}
+
+	ps, err := NewProxy(opts)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
+	defer proxy.Close()
+
 	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/tokenize", bytes.NewBufferString("request"))
-		req.Host = fmt.Sprintf("%s.proxy.test", vault.ID)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -77,14 +67,11 @@ func TestInboundRoute(t *testing.T) {
 		want := "request transformed response transformed"
 		got := readBody(res.Body)
 
-		if got != want {
-			t.Errorf("Expected: %v, but got: %v", want, got)
-		}
+		require.Equal(t, want, got)
 	})
 
-	t.Run("Test request passes through to the vault's upstream when no route matches", func(t *testing.T) {
+	t.Run("Test proxy returns 404 if no route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/noroute", bytes.NewBufferString("request"))
-		req.Host = fmt.Sprintf("%s.proxy.test", vault.ID)
 
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -92,94 +79,40 @@ func TestInboundRoute(t *testing.T) {
 			t.Error(err)
 		}
 
-		want := "request response"
+		want := "No route found"
 		got := readBody(res.Body)
 
-		if got != want {
-			t.Errorf("Expected: %v, but got: %v", want, got)
-		}
-	})
-
-	t.Run("Test request is rejected when no vault found", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/pass", bytes.NewBufferString("request"))
-		req.Host = "vltunknown.proxy.test"
-
-		client := &http.Client{}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Error(err)
-		}
-
-		if res.StatusCode != 404 {
-			t.Errorf("Expected: %v, but got: %v", 404, res.StatusCode)
-		}
-
-		want := "Vault was not found"
-		got := readBody(res.Body)
-
-		if got != want {
-			t.Errorf("Expected: %v, but got: %v", want, got)
-		}
-	})
-
-	t.Run("Test single vault mode ignores host name", func(t *testing.T) {
-		prevValue := config.IsSingleVaultMode
-		defer func() {
-			config.IsSingleVaultMode = prevValue
-		}()
-		config.IsSingleVaultMode = true
-
-		req, _ := http.NewRequest(http.MethodPost, proxy.URL+"/noroute", bytes.NewBufferString("request"))
-		req.Host = "localhost"
-
-		client := &http.Client{}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Error(err)
-		}
-
-		want := "request response"
-		got := readBody(res.Body)
-
-		if got != want {
-			t.Errorf("Expected: %v, but got: %v", want, got)
-		}
+		require.Equal(t, want, got)
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 }
 
 func TestOutboundRoute(t *testing.T) {
-	st := inmem.NewStorage()
-	defer st.Reset()
-
-	config := core.LoadConfig("../config/test.yml")
-	config.IsSingleVaultMode = false
-
-	ps, err := NewProxy(st, config)
-	require.NoError(t, err)
-
-	proxy := httptest.NewServer(ps.server)
-	defer proxy.Close()
-
-	// example.com will never be reached for Outbound routes
-	vault := &model.Vault{
-		ID:       "vlt1",
-		Upstream: "https://example.com",
-	}
-	err = st.CreateVault(vault)
-	require.NoError(t, err)
-
-	err = st.CreateRoute(&model.Route{
-		ID:                      "rt1",
-		Type:                    model.RouteOutbound,
+	route, err := routing.NewRoute(&routing.RouteParams{
+		Name:                    "out",
 		Method:                  http.MethodPost,
-		Path:                    upstream.URL + "/tokenize",
-		VaultID:                 vault.ID,
+		URL:                     upstream.URL + "/tokenize",
 		RequestTransformations:  []transform.Transformer{fakeTransformer},
 		ResponseTransformations: []transform.Transformer{fakeTransformer},
 	})
 	require.NoError(t, err)
 
-	caCert, err := ioutil.ReadFile(filepath.Join(config.CaPath, "ca.pem"))
+	router := routing.NewRouter()
+	router.SetRoutes([]*routing.Route{route})
+
+	opts := &Options{
+		CAPath:        "./testdata",
+		Router:        router,
+		ProxyPassword: "password",
+	}
+
+	ps, err := NewProxy(opts)
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(ps.server)
+	defer proxy.Close()
+
+	caCert, err := ioutil.ReadFile(filepath.Join(opts.CAPath, "ca.cert"))
 	require.NoError(t, err)
 
 	caCertPool := x509.NewCertPool()
@@ -189,7 +122,7 @@ func TestOutboundRoute(t *testing.T) {
 	tlsConfig := &tls.Config{}
 	tlsConfig.RootCAs = caCertPool
 
-	t.Run("Test proxy requires vault ID and pass in BasicAuth", func(t *testing.T) {
+	t.Run("Test proxy requires password in BasicAuth", func(t *testing.T) {
 		// no user:password set for proxy
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
@@ -213,7 +146,7 @@ func TestOutboundRoute(t *testing.T) {
 
 		// setup user:password for proxyURL to pass basic auth
 		proxyURL, _ := url.Parse(proxy.URL)
-		proxyURL.User = url.UserPassword(vault.ID, config.ProxyPassword)
+		proxyURL.User = url.UserPassword("x", opts.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
@@ -237,19 +170,13 @@ func TestOutboundRoute(t *testing.T) {
 		}
 	})
 
-	t.Run("Test single vault mode request and response body transformation when route matches", func(t *testing.T) {
-		prevValue := config.IsSingleVaultMode
-		defer func() {
-			config.IsSingleVaultMode = prevValue
-		}()
-		config.IsSingleVaultMode = true
-
+	t.Run("Test request and response body transformation when route matches", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, upstream.URL+"/tokenize", bytes.NewBufferString("request"))
 
 		// basic auth password "x" should not be treated as vault ID
 		// in signle vault mode
 		proxyURL, _ := url.Parse(proxy.URL)
-		proxyURL.User = url.UserPassword("x", config.ProxyPassword)
+		proxyURL.User = url.UserPassword("x", opts.ProxyPassword)
 
 		transport := &http.Transport{
 			Proxy: func(req *http.Request) (*url.URL, error) {
@@ -271,6 +198,34 @@ func TestOutboundRoute(t *testing.T) {
 		if got != want {
 			t.Errorf("Expected: %v, but got: %v", want, got)
 		}
+	})
+
+	t.Run("Test proxy returns 404 if no route matches", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, "https://unknown.com/path", bytes.NewBufferString("request"))
+
+		proxyURL, _ := url.Parse(proxy.URL)
+		proxyURL.User = url.UserPassword("x", opts.ProxyPassword)
+
+		transport := &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return proxyURL, nil
+			},
+			TLSClientConfig: tlsConfig,
+		}
+
+		client := &http.Client{
+			Transport: transport,
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Error(err)
+		}
+
+		want := "No route found"
+		got := readBody(res.Body)
+
+		require.Equal(t, want, got)
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 }
 

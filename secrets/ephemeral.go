@@ -1,13 +1,13 @@
 package secrets
 
-import "github.com/vaulty/proxy/encrypt"
+import "github.com/vaulty/vaulty/encrypt"
 
 type ephemeral struct {
 	enc  encrypt.Encrypter
 	data map[string][]byte
 }
 
-func NewEphemeralStorage(enc encrypt.Encrypter) SecretStorage {
+func NewEphemeralStorage(enc encrypt.Encrypter) SecretsStorage {
 	return &ephemeral{
 		data: make(map[string][]byte),
 		enc:  enc,

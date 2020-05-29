@@ -4,132 +4,42 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/elazarl/goproxy"
 	"github.com/elazarl/goproxy/ext/auth"
-	"github.com/vaulty/proxy/model"
-	"github.com/vaulty/proxy/storage"
+	log "github.com/sirupsen/logrus"
+	"github.com/vaulty/vaulty/routing"
 )
 
-func (p *Proxy) SetRouteType() goproxy.ReqHandler {
-	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		if ctxUserData(ctx).routeType == "" {
-			ctxUserData(ctx).routeType = model.RouteInbound
-		}
-
-		return req, nil
-	})
-}
 func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		vault, err := p.findVault(ctx, req)
-		if err != nil {
-			fmt.Println("Vault was not found")
-			return nil, errResponse(req, "Vault was not found", http.StatusNotFound)
+
+		route := p.router.LookupRoute(req)
+
+		if route == nil {
+			return nil, errResponse(req, "No route found", http.StatusNotFound)
 		}
 
-		// Setup req.URL to default vault's upstream.
-		// For inbound requests req contains URL of host where
-		// Vault is running e.g. proxy.vaulty.co. To forward
-		// requests to  upstream we should set host, port and
-		// user of upstream.
-		if ctxUserData(ctx).routeType == model.RouteInbound {
-			req.URL.Scheme = vault.UpstreamURL().Scheme
-			req.URL.User = vault.UpstreamURL().User
-			req.URL.Host = vault.UpstreamURL().Host
+		log.Debugf("Route found: %s", route.Name)
+
+		if route.IsInbound {
+			req.URL.Scheme = route.UpstreamURL.Scheme
+			req.URL.User = route.UpstreamURL.User
+			req.URL.Host = route.UpstreamURL.Host
 		}
 
-		route, err := p.storage.FindRoute(vault.ID, ctxUserData(ctx).routeType, req)
-		if err == storage.ErrNoRows {
-			return req, nil
-		}
-		if err != nil {
-			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
-		}
-
-		err = p.TransformRequestBody(route, req)
+		err := p.TransformRequestBody(route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
 		ctxUserData(ctx).route = route
 
-		if ctxUserData(ctx).routeType == model.RouteInbound && route.Upstream != "" {
-			upstreamURL := route.UpstreamURL()
-
-			if upstreamURL != nil {
-				req.URL.Scheme = upstreamURL.Scheme
-				req.URL.User = upstreamURL.User
-				req.URL.Host = upstreamURL.Host
-			}
-		}
-
 		return req, nil
 	})
-}
-
-func (p *Proxy) findVault(ctx *goproxy.ProxyCtx, req *http.Request) (*model.Vault, error) {
-	var (
-		vaultID string
-		err     error
-	)
-
-	// just return first vault if IsSingleVaultMode set
-	if p.config.IsSingleVaultMode {
-		vaults, err := p.storage.ListVaults()
-		if err != nil {
-			return nil, err
-		}
-
-		if len(vaults) == 0 {
-			return nil, errors.New("No vaults found. Please, create vault first")
-		}
-
-		return vaults[0], nil
-	}
-
-	if ctxUserData(ctx).routeType == model.RouteInbound {
-		vaultID, err = getVaultIDFromHost(p.config.BaseHost, req.Host)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		vaultID = ctxUserData(ctx).vaultID
-	}
-
-	return p.storage.FindVault(vaultID)
-}
-
-var vaultIDRegexp *regexp.Regexp
-
-// getVaultIDFromHost returns ID of vault from the host name
-// We expect that in multi vault setup when base host is proxy.vaulty.co
-// host name of vault looks like this:
-// 	vltXXXX.proxy.vaulty.co
-// 	vltZZZZ.proxy.vaulty.co
-//
-// Having proxy.vaulty.co as baseHost function returns vltXXXX
-func getVaultIDFromHost(baseHost, host string) (string, error) {
-	if vaultIDRegexp == nil {
-		vaultHost := fmt.Sprintf(`^(vlt\w+).%s(:\d+)?$`, baseHost)
-		vaultIDRegexp = regexp.MustCompile(vaultHost)
-	}
-
-	matches := vaultIDRegexp.FindAllStringSubmatch(host, -1)
-
-	if len(matches) != 1 {
-		return "", errors.New(fmt.Sprintf("Received request for %s instead of configured host: vlt*.%s", host, baseHost))
-	}
-
-	vaultID := matches[0][1]
-
-	return vaultID, nil
 }
 
 func (p *Proxy) HandleResponse() goproxy.RespHandler {
@@ -151,7 +61,7 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 	})
 }
 
-func (p *Proxy) TransformRequestBody(route *model.Route, req *http.Request) error {
+func (p *Proxy) TransformRequestBody(route *routing.Route, req *http.Request) error {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return err
@@ -172,7 +82,7 @@ func (p *Proxy) TransformRequestBody(route *model.Route, req *http.Request) erro
 	return nil
 }
 
-func (p *Proxy) TransformResponseBody(route *model.Route, res *http.Response) error {
+func (p *Proxy) TransformResponseBody(route *routing.Route, res *http.Response) error {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -195,15 +105,12 @@ func (p *Proxy) TransformResponseBody(route *model.Route, res *http.Response) er
 
 func (p *Proxy) HandleConnect() goproxy.HttpsHandler {
 	return goproxy.FuncHttpsHandler(func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-		vaultID, password, ok := proxyAuth(ctx.Req)
+		_, password, ok := proxyAuth(ctx.Req)
 
-		if !ok || password != p.config.ProxyPassword {
+		if !ok || password != p.proxyPassword {
 			ctx.Resp = auth.BasicUnauthorized(ctx.Req, "")
 			return goproxy.RejectConnect, host
 		}
-
-		ctxUserData(ctx).routeType = model.RouteOutbound
-		ctxUserData(ctx).vaultID = vaultID
 
 		return goproxy.MitmConnect, host
 	})

@@ -1,6 +1,6 @@
 package action
 
-import "github.com/vaulty/proxy/encrypt"
+import "github.com/vaulty/vaulty/encrypt"
 
 type Encrypt struct {
 	enc encrypt.Encrypter

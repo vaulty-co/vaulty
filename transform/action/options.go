@@ -1,11 +1,11 @@
 package action
 
 import (
-	"github.com/vaulty/proxy/encrypt"
-	"github.com/vaulty/proxy/secrets"
+	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/secrets"
 )
 
 type Options struct {
-	Encrypter     encrypt.Encrypter
-	SecretStorage secrets.SecretStorage
+	Encrypter      encrypt.Encrypter
+	SecretsStorage secrets.SecretsStorage
 }

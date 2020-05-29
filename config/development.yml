@@ -1,6 +1,0 @@
-environment: development
-base_host: proxy.vaulty.dev
-proxy_pass:
-redis:
-  url: redis://localhost/2
-# ca_path: 

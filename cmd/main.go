@@ -10,12 +10,11 @@ import (
 func main() {
 	app := &cli.App{
 		Name:                 "vaulty",
-		Usage:                "Vaulty command line utility",
+		Usage:                "Vaulty: forward/reverse proxy securing your data",
 		EnableBashCompletion: true,
 	}
 
 	app.Commands = []*cli.Command{
-		apiCommand,
 		proxyCommand,
 		versionCommand,
 	}

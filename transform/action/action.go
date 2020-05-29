@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vaulty/proxy/transform"
+	"github.com/vaulty/vaulty/transform"
 )
 
 func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error) {
@@ -31,7 +31,7 @@ func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error)
 		return result, nil
 	case "tokenize":
 		result := &Tokenize{
-			secretStorage: opts.SecretStorage,
+			secretsStorage: opts.SecretsStorage,
 		}
 		err := mapstructure.Decode(input, result)
 		if err != nil {
@@ -40,7 +40,7 @@ func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error)
 		return result, nil
 	case "detokenize":
 		result := &Detokenize{
-			secretStorage: opts.SecretStorage,
+			secretsStorage: opts.SecretsStorage,
 		}
 		err := mapstructure.Decode(input, result)
 		if err != nil {

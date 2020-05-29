@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/proxy/encrypt"
+	"github.com/vaulty/vaulty/encrypt"
 )
 
 func TestEphemeral(t *testing.T) {

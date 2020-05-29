@@ -1,0 +1,61 @@
+{
+	"options": {
+		"default_upstream": "https://postman-echo.com"
+	},
+	"routes":[
+		{
+			"name": "in1",
+			"method":"POST",
+			"url":"/token",
+			"request_transformations":[
+				{
+					"type":"json",
+					"expression":"card.number",
+					"action":{
+						"type":"tokenize"
+					}
+				}
+			]
+		},
+		{
+			"name": "in2",
+			"method":"POST",
+			"url":"/card",
+			"upstream": "https://backend.com",
+			"request_transformations":[
+				{
+					"type":"json",
+					"expression":"card.number",
+					"action":{
+						"type":"tokenize"
+					}
+				}
+			]
+		},
+		{
+			"name": "inAll",
+			"method":"*",
+			"url":"/*",
+			"upstream": "https://backend.com"
+		},
+		{
+			"name": "out1",
+			"method":"POST",
+			"url":"https://api.stripe.com/token",
+			"request_transformations":[
+				{
+					"type":"json",
+					"expression":"card.number",
+					"action":{
+						"type":"detokenize"
+					}
+				}
+			]
+		},
+		{
+			"name": "outAll",
+			"method":"*",
+			"url":"https://api.stripe.com/*"
+		}
+	]
+}

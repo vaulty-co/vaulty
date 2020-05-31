@@ -55,4 +55,76 @@ func TestJson(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, newBody, body)
 	})
+
+	t.Run("Test transformation validation", func(t *testing.T) {
+		tr := &Json{
+			Expression: "users.#.email",
+		}
+
+		require.NoError(t, tr.Validate())
+
+		tr = &Json{
+			Expression: "one.#.users.#.email",
+		}
+
+		require.EqualError(t, tr.Validate(), "Nested arrays are not supported, but used in the expression: one.#.users.#.email")
+	})
+
+	t.Run("Test transformation of array", func(t *testing.T) {
+		tr := &Json{
+			Expression: "users.#.email",
+			Action: TransformerFunc(func(body []byte) ([]byte, error) {
+				return append(body, '+', body[0]), nil
+			}),
+		}
+
+		body := []byte(`
+{
+	"users":[
+		{
+			"id":1,
+			"email":"a@mail.com"
+		},
+		{
+			"id":2,
+			"email":"b@mail.com"
+		},
+		{
+			"id":3,
+			"email":"c@mail.com"
+		},
+		{
+			"id":4,
+			"email": true
+		}
+	]
+
+`)
+
+		want := []byte(`
+{
+	"users":[
+		{
+			"id":1,
+			"email":"a@mail.com+a"
+		},
+		{
+			"id":2,
+			"email":"b@mail.com+b"
+		},
+		{
+			"id":3,
+			"email":"c@mail.com+c"
+		},
+		{
+			"id":4,
+			"email": true
+		}
+	]
+
+`)
+		newBody, err := tr.Transform(body)
+		require.NoError(t, err)
+		require.Equal(t, string(want), string(newBody))
+	})
 }

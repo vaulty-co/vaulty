@@ -28,6 +28,12 @@ func Factory(rawInput interface{}, action Transformer) (Transformer, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		err = jsonTransformation.Validate()
+		if err != nil {
+			return nil, err
+		}
+
 		return jsonTransformation, nil
 	case "regexp":
 		regexpTransformation := &Regexp{

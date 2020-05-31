@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -35,7 +35,7 @@ func (t *Json) Transform(body []byte) ([]byte, error) {
 	case result.IsArray():
 		return t.transformArray(body, result)
 	default:
-		logrus.Warnf("Unsupported type of json expression result: %s", result.Type)
+		log.Warnf("Unsupported type of json expression result: %s", result.Type)
 		return body, nil
 	}
 }
@@ -63,9 +63,9 @@ func (t *Json) transformArray(body []byte, result gjson.Result) ([]byte, error) 
 		// to keep indexes properly
 		if res.Type != gjson.String {
 			originalValues = append(originalValues, "")
+		} else {
+			originalValues = append(originalValues, res.String())
 		}
-
-		originalValues = append(originalValues, res.String())
 
 		return true
 	})
@@ -73,6 +73,11 @@ func (t *Json) transformArray(body []byte, result gjson.Result) ([]byte, error) 
 	newBody := body
 
 	for index, value := range originalValues {
+		// do not replace empty strings or non-string values
+		if value == "" {
+			continue
+		}
+
 		newValue, err := t.Action.Transform([]byte(value))
 		if err != nil {
 			return nil, err

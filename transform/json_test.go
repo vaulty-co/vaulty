@@ -92,6 +92,10 @@ func TestJson(t *testing.T) {
 		{
 			"id":3,
 			"email":"c@mail.com"
+		},
+		{
+			"id":4,
+			"email": true
 		}
 	]
 
@@ -111,6 +115,10 @@ func TestJson(t *testing.T) {
 		{
 			"id":3,
 			"email":"c@mail.com+c"
+		},
+		{
+			"id":4,
+			"email": true
 		}
 	]
 

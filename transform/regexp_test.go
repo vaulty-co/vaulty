@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -86,4 +87,20 @@ func TestRegexp(t *testing.T) {
 		require.Contains(t, string(newBody), "hello")
 	})
 
+	t.Run("Test transformation of multiple matches", func(t *testing.T) {
+		tr := &Regexp{
+			Expression:     `number: (\d+)(\d{4})`,
+			SubmatchNumber: 2,
+			Action: TransformerFunc(func(body []byte) ([]byte, error) {
+				newBody := bytes.Repeat([]byte("x"), len(body))
+				return newBody, nil
+			}),
+		}
+
+		body := []byte("number: 12345 whatever number: 54321")
+		want := []byte("number: 1xxxx whatever number: 5xxxx")
+		got, err := tr.Transform(body)
+		require.NoError(t, err)
+		require.Equal(t, string(want), string(got))
+	})
 }

@@ -3,6 +3,7 @@ package transform
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,43 +11,75 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strings"
-	"sync"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/vaulty/vaulty/action"
+	"github.com/vaulty/vaulty/transformer"
 )
 
-type Form struct {
-	Action Transformer
-	Fields string
-
+type Transformation struct {
+	action action.Action
 	fields []string
-	once   sync.Once
 }
 
-func (t *Form) Transform(req *http.Request) (*http.Request, error) {
+type Params struct {
+	Fields string
+	Action action.Action
+}
+
+var _ transformer.Transformer = (*Transformation)(nil)
+
+func Factory(rawParams map[string]interface{}, act action.Action) (transformer.Transformer, error) {
+	params := &Params{
+		Action: act,
+	}
+
+	err := mapstructure.Decode(rawParams, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTransformation(params)
+}
+
+func NewTransformation(params *Params) (*Transformation, error) {
+	if params.Fields == "" {
+		return nil, errors.New("No fields passed for the form transformation")
+	}
+
+	t := &Transformation{
+		fields: strings.Split(strings.ReplaceAll(params.Fields, " ", ""), ","),
+		action: params.Action,
+	}
+
+	return t, nil
+}
+
+func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
 	err := t.transformFormData(req)
 
 	return req, err
 }
 
+// Currently we do not transform multipart/form-data of the response
+func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, error) {
+	return res, nil
+}
+
 // transformFormData does simple thing. It copies parts
 // from the request and writes them into new multipart
 // then replaces body of the request
-func (t *Form) transformFormData(req *http.Request) error {
-	t.once.Do(func() {
-		// remove spaces in field if multiple fields are provided
-		// for transformation
-		t.fields = strings.Split(strings.ReplaceAll(t.Fields, " ", ""), ",")
-	})
-
+func (t *Transformation) transformFormData(req *http.Request) error {
 	// extract boundary parameter from Content-Type header
-	v := req.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(v)
+	header := req.Header.Get("Content-Type")
+	_, params, err := mime.ParseMediaType(header)
 	if err != nil {
 		return err
 	}
 
 	boundary, ok := params["boundary"]
 	if !ok {
-		return fmt.Errorf("boundary was not found in header: %s", v)
+		return fmt.Errorf("boundary was not found in header: %s", header)
 	}
 
 	mr := multipart.NewReader(req.Body, boundary)
@@ -74,7 +107,7 @@ func (t *Form) transformFormData(req *http.Request) error {
 				return err
 			}
 
-			newBody, err := t.Action.Transform(body)
+			newBody, err := t.action.Transform(body)
 			if err != nil {
 				return err
 			}
@@ -88,11 +121,13 @@ func (t *Form) transformFormData(req *http.Request) error {
 	mw.Close()
 
 	req.Body = ioutil.NopCloser(bufio.NewReader(&b))
+	req.Header.Del("Content-Length")
+	req.ContentLength = int64(b.Len())
+
 	return nil
 }
 
 func isInSlice(slice []string, str string) bool {
-	fmt.Printf("Check if %s is in %v\n", str, slice)
 	for _, s := range slice {
 		if s == str {
 			return true

@@ -1,52 +1,123 @@
 package transform
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vaulty/vaulty/action"
 )
 
 func TestForm(t *testing.T) {
+	fakeAction := action.ActionFunc(func(body []byte) ([]byte, error) {
+		return append(body, "transformed"...), nil
+	})
+
 	t.Run("Test building transformer from JSON", func(t *testing.T) {
-		postData := `--xxx
-Content-Disposition: form-data; name="field1"
-
-value1
---xxx
-Content-Disposition: form-data; name="field2"
-
-value2
---xxx
-Content-Disposition: form-data; name="file"; filename="file"
-Content-Type: application/octet-stream
-Content-Transfer-Encoding: binary
-
-binary data
---xxx--
-`
-
-		req := &http.Request{
-			Method: "POST",
-			Header: http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}},
-			Body:   ioutil.NopCloser(strings.NewReader(postData)),
+		rawJson := []byte(`
+		{
+			"type":"form",
+			"fields":"field1"
 		}
+		`)
 
-		tr := &Form{
-			Fields: "field1, field2",
-			Action: TransformerFunc(func(body []byte) ([]byte, error) {
-				fmt.Println("Action called")
-				return append(body, "transformed"...), nil
-			}),
-		}
+		var input map[string]interface{}
+		err := json.Unmarshal(rawJson, &input)
 
-		req, err := tr.Transform(req)
+		fakeAction := action.ActionFunc(func(body []byte) ([]byte, error) {
+			require.Equal(t, []byte("value1"), body)
+			return body, nil
+		})
+
+		transformation, err := Factory(input, fakeAction)
+		require.NoError(t, err)
+		require.NotNil(t, transformation)
+
+		// postData := `--xxx
+		// Content-Disposition: form-data; name="field1"
+
+		// value1
+		// --xxx
+		// Content-Disposition: form-data; name="field2"
+
+		// value2
+		// --xxx
+		// Content-Disposition: form-data; name="file"; filename="file"
+		// Content-Type: application/octet-stream
+		// Content-Transfer-Encoding: binary
+
+		// binary data
+		// --xxx--
+		// `
+
+		// req := httptest.NewRequest("POST", "/url", strings.NewReader(postData))
+		// req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+		// _, err = transformation.TransformRequest(req)
+		// require.NoError(t, err)
+	})
+
+	t.Run("Test validation", func(t *testing.T) {
+		_, err := NewTransformation(&Params{})
+		require.EqualError(t, err, "No fields passed for the form transformation")
+	})
+
+	t.Run("Test request transformation of multipart/form-data", func(t *testing.T) {
+		formData, err := ioutil.ReadFile("./testdata/form-data.txt")
 		require.NoError(t, err)
 
-		fmt.Printf("After Value: %s\n", req.PostFormValue("field1"))
-		fmt.Printf("After Value: %s\n", req.PostFormValue("field2"))
+		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
+		require.NoError(t, err)
+		req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		require.NoError(t, err)
+		require.Equal(t, "value1transformed", req.FormValue("field1"))
+	})
+
+	t.Run("Test request transformation of application/x-www-form-urlencoded", func(t *testing.T) {
+		// req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
+		// require.NoError(t, err)
+		// req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+
+		// tr, err := NewTransformation(&Params{
+		// 	Fields: "field1",
+		// 	Action: fakeAction,
+		// })
+		// require.NoError(t, err)
+
+		// req, err = tr.TransformRequest(req)
+		// require.NoError(t, err)
+		// require.Equal(t, "value1transformed", req.FormValue("field1"))
+	})
+
+	t.Run("Test multiple fields transformation", func(t *testing.T) {
+	})
+
+	t.Run("Test unsupported content type does nothing", func(t *testing.T) {
+	})
+
+	t.Run("Test response transformation does not transform response", func(t *testing.T) {
+		res := &http.Response{
+			Body: ioutil.NopCloser(bytes.NewReader([]byte("body"))),
+		}
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		newRes, err := tr.TransformResponse(res)
+		require.Equal(t, res, newRes)
+		require.Equal(t, res.Body, newRes.Body)
 	})
 }

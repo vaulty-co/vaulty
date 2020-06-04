@@ -10,6 +10,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -56,9 +57,28 @@ func NewTransformation(params *Params) (*Transformation, error) {
 }
 
 func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
-	err := t.transformFormData(req)
+	header := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(header)
+	if err != nil {
+		return nil, err
+	}
 
-	return req, err
+	switch mediatype {
+	case "application/x-www-form-urlencoded":
+		err = t.transformFormData(req)
+		if err != nil {
+			return nil, err
+		}
+		return req, nil
+	case "multipart/form-data":
+		err = t.transformMultipartFormData(req)
+		if err != nil {
+			return nil, err
+		}
+		return req, nil
+	}
+
+	return req, nil
 }
 
 // Currently we do not transform multipart/form-data of the response
@@ -66,10 +86,39 @@ func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, 
 	return res, nil
 }
 
+func (t *Transformation) transformFormData(req *http.Request) error {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+
+	data, err := url.ParseQuery(string(body))
+	if err != nil {
+		return err
+	}
+
+	for _, field := range t.fields {
+		value := data.Get(field)
+		newValue, err := t.action.Transform([]byte(value))
+		if err != nil {
+			return err
+		}
+
+		data.Set(field, string(newValue))
+	}
+
+	newBodyReader := strings.NewReader(data.Encode())
+	req.Body = ioutil.NopCloser(newBodyReader)
+	req.Header.Del("Content-Length")
+	req.ContentLength = int64(newBodyReader.Len())
+
+	return nil
+}
+
 // transformFormData does simple thing. It copies parts
 // from the request and writes them into new multipart
 // then replaces body of the request
-func (t *Transformation) transformFormData(req *http.Request) error {
+func (t *Transformation) transformMultipartFormData(req *http.Request) error {
 	// extract boundary parameter from Content-Type header
 	header := req.Header.Get("Content-Type")
 	_, params, err := mime.ParseMediaType(header)

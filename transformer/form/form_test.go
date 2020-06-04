@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,28 +36,6 @@ func TestForm(t *testing.T) {
 		transformation, err := Factory(input, fakeAction)
 		require.NoError(t, err)
 		require.NotNil(t, transformation)
-
-		// postData := `--xxx
-		// Content-Disposition: form-data; name="field1"
-
-		// value1
-		// --xxx
-		// Content-Disposition: form-data; name="field2"
-
-		// value2
-		// --xxx
-		// Content-Disposition: form-data; name="file"; filename="file"
-		// Content-Type: application/octet-stream
-		// Content-Transfer-Encoding: binary
-
-		// binary data
-		// --xxx--
-		// `
-
-		// req := httptest.NewRequest("POST", "/url", strings.NewReader(postData))
-		// req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
-		// _, err = transformation.TransformRequest(req)
-		// require.NoError(t, err)
 	})
 
 	t.Run("Test validation", func(t *testing.T) {
@@ -84,25 +63,35 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation of application/x-www-form-urlencoded", func(t *testing.T) {
-		// req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
-		// require.NoError(t, err)
-		// req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+		req, _ := http.NewRequest("POST", "/request", strings.NewReader("field1=value1&field2=value2"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		// tr, err := NewTransformation(&Params{
-		// 	Fields: "field1",
-		// 	Action: fakeAction,
-		// })
-		// require.NoError(t, err)
+		tr, err := NewTransformation(&Params{
+			Fields: "field1, field2",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
 
-		// req, err = tr.TransformRequest(req)
-		// require.NoError(t, err)
-		// require.Equal(t, "value1transformed", req.FormValue("field1"))
-	})
-
-	t.Run("Test multiple fields transformation", func(t *testing.T) {
+		req, err = tr.TransformRequest(req)
+		require.NoError(t, err)
+		require.Equal(t, "value1transformed", req.FormValue("field1"))
+		require.Equal(t, "value2transformed", req.FormValue("field2"))
 	})
 
 	t.Run("Test unsupported content type does nothing", func(t *testing.T) {
+		body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+		req, _ := http.NewRequest("POST", "/request", body)
+		req.Header.Set("Content-Type", "application/json")
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1, field2",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		newReq, err := tr.TransformRequest(req)
+		require.Equal(t, req, newReq)
+		require.Equal(t, body, newReq.Body)
 	})
 
 	t.Run("Test response transformation does not transform response", func(t *testing.T) {

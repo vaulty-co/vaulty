@@ -8,6 +8,9 @@ import (
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
+	"github.com/vaulty/vaulty/transformer"
+	"github.com/vaulty/vaulty/transformer/json"
+	"github.com/vaulty/vaulty/transformer/regexp"
 )
 
 func Run(config *Config) error {
@@ -19,7 +22,14 @@ func Run(config *Config) error {
 	secretsStorage := secrets.NewEphemeralStorage(encrypter)
 
 	// Create router and load routes from file into router
-	loader := routing.NewFileLoader(encrypter, secretsStorage)
+	loader := routing.NewFileLoader(&routing.FileLoaderOptions{
+		Enc:            encrypter,
+		SecretsStorage: secretsStorage,
+		TransformerFactory: map[string]transformer.Factory{
+			"json":   json.Factory,
+			"regexp": regexp.Factory,
+		},
+	})
 	routes, err := loader.Load(config.RoutesFile)
 	if err != nil {
 		return err
@@ -27,6 +37,7 @@ func Run(config *Config) error {
 	if len(routes) == 0 {
 		return fmt.Errorf("No routes were loaded from file: %s", config.RoutesFile)
 	}
+
 	router := routing.NewRouter()
 	router.SetRoutes(routes)
 

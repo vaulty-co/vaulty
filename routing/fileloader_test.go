@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/secrets"
+	"github.com/vaulty/vaulty/transformer"
+	"github.com/vaulty/vaulty/transformer/json"
 )
 
 func TestLoadFromFile(t *testing.T) {
@@ -17,6 +19,9 @@ func TestLoadFromFile(t *testing.T) {
 	loader := &fileLoader{
 		enc:            enc,
 		secretsStorage: secretsStorage,
+		transformerFactory: map[string]transformer.Factory{
+			"json": json.Factory,
+		},
 	}
 
 	routes, err := loader.Load("./testdata/routes.json")

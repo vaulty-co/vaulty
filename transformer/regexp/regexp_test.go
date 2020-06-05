@@ -3,7 +3,9 @@ package regexp
 import (
 	"bytes"
 	"encoding/json"
-	"net/http/httptest"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,20 +26,25 @@ func TestRegexp(t *testing.T) {
 		err := json.Unmarshal(rawJson, &input)
 
 		fakeAction := action.ActionFunc(func(body []byte) ([]byte, error) {
-			require.Equal(t, []byte("23456789"), body)
-			return body, nil
+			return nil, nil
 		})
 
 		transformation, err := Factory(input, fakeAction)
 		require.NoError(t, err)
-
-		body := bytes.NewBufferString("number 1234567890")
-		req := httptest.NewRequest("POST", "/url", body)
-		_, err = transformation.TransformRequest(req)
-		require.NoError(t, err)
+		require.NotNil(t, transformation)
 	})
 
-	t.Run("Test one submatch", func(t *testing.T) {
+	t.Run("Test transformation validation", func(t *testing.T) {
+		_, err := NewTransformation(&Params{Expression: `\d(\d+)\d{4}`})
+		require.NoError(t, err)
+
+		// invalid regexp sequence **
+		_, err = NewTransformation(&Params{Expression: "**"})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "error parsing regexp")
+	})
+
+	t.Run("Test transformation with one submatch", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
 			Expression:     `number: \d(\d+)\d{4}`,
 			SubmatchNumber: 1,
@@ -53,7 +60,7 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Test multiple submatch", func(t *testing.T) {
+	t.Run("Test transformation with multiple submatches", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
 			Expression:     `number: (\d+)(\d{4})`,
 			SubmatchNumber: 2,
@@ -69,7 +76,7 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Test no submatch", func(t *testing.T) {
+	t.Run("Test transformation when submatch number exceeds possible number of submatches", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
 			Expression:     `number: (\d+)(\d{4})`,
 			SubmatchNumber: 5,
@@ -116,4 +123,46 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, string(want), string(got))
 	})
+
+	t.Run("Test request transformation", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/request", strings.NewReader(`number: 12345 whatever number: 54321`))
+		req.Header.Set("Content-Type", "plain/text")
+
+		tr, err := NewTransformation(&Params{
+			Expression:     `number: (\d+)(\d{4})`,
+			SubmatchNumber: 2,
+			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
+				newBody := bytes.Repeat([]byte("x"), len(body))
+				return newBody, nil
+			}),
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		newBody, err := ioutil.ReadAll(req.Body)
+		require.Equal(t, "number: 1xxxx whatever number: 5xxxx", string(newBody))
+	})
+
+	t.Run("Test response transformation", func(t *testing.T) {
+		res := &http.Response{
+			Body:   ioutil.NopCloser(strings.NewReader(`number: 12345 whatever number: 54321`)),
+			Header: http.Header{"Content-Type": {"plain/text"}},
+		}
+
+		tr, err := NewTransformation(&Params{
+			Expression:     `number: (\d+)(\d{4})`,
+			SubmatchNumber: 2,
+			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
+				newBody := bytes.Repeat([]byte("x"), len(body))
+				return newBody, nil
+			}),
+		})
+		require.NoError(t, err)
+
+		res, err = tr.TransformResponse(res)
+		require.NoError(t, err)
+		newBody, err := ioutil.ReadAll(res.Body)
+		require.Equal(t, "number: 1xxxx whatever number: 5xxxx", string(newBody))
+	})
+
 }

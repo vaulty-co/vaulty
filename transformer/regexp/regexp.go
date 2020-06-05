@@ -1,6 +1,8 @@
 package regexp
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 
@@ -54,11 +56,40 @@ func NewTransformation(params *Params) (*Transformation, error) {
 }
 
 func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
-	return nil, nil
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	newBody, err := t.Transform(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Body = ioutil.NopCloser(bytes.NewReader(newBody))
+	req.Header.Del("Content-Length")
+	req.ContentLength = int64(len(newBody))
+
+	return req, nil
 }
 
 func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, error) {
-	return nil, nil
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	res.Body.Close()
+
+	newBody, err := t.Transform(body)
+	if err != nil {
+		return nil, err
+	}
+
+	res.Body = ioutil.NopCloser(bytes.NewReader(newBody))
+	res.Header.Del("Content-Length")
+	res.ContentLength = int64(len(newBody))
+
+	return res, nil
 }
 
 func (t *Transformation) Transform(body []byte) ([]byte, error) {

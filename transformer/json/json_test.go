@@ -183,7 +183,7 @@ func TestJson(t *testing.T) {
 		require.Equal(t, `{"name": "transformed"}`, string(newBody))
 	})
 
-	t.Run("Test request transformation with unsupported content type", func(t *testing.T) {
+	t.Run("Test response transformation with unsupported content type", func(t *testing.T) {
 		body := ioutil.NopCloser(strings.NewReader(`{"name": "John"}`))
 		res := &http.Response{
 			Body:   body,

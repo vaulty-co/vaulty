@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -55,6 +56,12 @@ func NewTransformation(params *Params) (*Transformation, error) {
 }
 
 func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
+	// do nothing if it's not a JSON request
+	contentType := req.Header.Get("Content-Type")
+	if mediaType, _, _ := mime.ParseMediaType(contentType); mediaType != "application/json" {
+		return req, nil
+	}
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err

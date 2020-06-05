@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -57,21 +56,16 @@ func NewTransformation(params *Params) (*Transformation, error) {
 }
 
 func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
-	header := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(header)
-	if err != nil {
-		return nil, err
-	}
-
-	switch mediatype {
+	contentType := req.Header.Get("Content-Type")
+	switch mediaType, params, _ := mime.ParseMediaType(contentType); mediaType {
 	case "application/x-www-form-urlencoded":
-		err = t.transformFormData(req)
+		err := t.transformFormData(req)
 		if err != nil {
 			return nil, err
 		}
 		return req, nil
 	case "multipart/form-data":
-		err = t.transformMultipartFormData(req)
+		err := t.transformMultipartFormData(req, params["boundary"])
 		if err != nil {
 			return nil, err
 		}
@@ -118,19 +112,7 @@ func (t *Transformation) transformFormData(req *http.Request) error {
 // transformFormData does simple thing. It copies parts
 // from the request and writes them into new multipart
 // then replaces body of the request
-func (t *Transformation) transformMultipartFormData(req *http.Request) error {
-	// extract boundary parameter from Content-Type header
-	header := req.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(header)
-	if err != nil {
-		return err
-	}
-
-	boundary, ok := params["boundary"]
-	if !ok {
-		return fmt.Errorf("boundary was not found in header: %s", header)
-	}
-
+func (t *Transformation) transformMultipartFormData(req *http.Request, boundary string) error {
 	mr := multipart.NewReader(req.Body, boundary)
 
 	var b bytes.Buffer

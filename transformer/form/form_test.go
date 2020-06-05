@@ -28,11 +28,6 @@ func TestForm(t *testing.T) {
 		var input map[string]interface{}
 		err := json.Unmarshal(rawJson, &input)
 
-		fakeAction := action.ActionFunc(func(body []byte) ([]byte, error) {
-			require.Equal(t, []byte("value1"), body)
-			return body, nil
-		})
-
 		transformation, err := Factory(input, fakeAction)
 		require.NoError(t, err)
 		require.NotNil(t, transformation)

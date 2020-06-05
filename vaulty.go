@@ -9,6 +9,7 @@ import (
 	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
 	"github.com/vaulty/vaulty/transformer"
+	"github.com/vaulty/vaulty/transformer/form"
 	"github.com/vaulty/vaulty/transformer/json"
 	"github.com/vaulty/vaulty/transformer/regexp"
 )
@@ -28,6 +29,7 @@ func Run(config *Config) error {
 		TransformerFactory: map[string]transformer.Factory{
 			"json":   json.Factory,
 			"regexp": regexp.Factory,
+			"form":   form.Factory,
 		},
 	})
 	routes, err := loader.Load(config.RoutesFile)

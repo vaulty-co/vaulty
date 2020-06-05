@@ -57,6 +57,46 @@ func TestForm(t *testing.T) {
 		require.Equal(t, "value1transformed", req.FormValue("field1"))
 	})
 
+	t.Run("Test request transformation of array of multipart/form-data", func(t *testing.T) {
+		formData, err := ioutil.ReadFile("./testdata/form-data.txt")
+		require.NoError(t, err)
+
+		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
+		require.NoError(t, err)
+		req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field3",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		require.NoError(t, err)
+
+		var maxMemory int64 = 32 << 20 // 32MB
+		req.ParseMultipartForm(maxMemory)
+		require.Equal(t, []string{"value31transformed", "value32transformed"}, req.PostForm["field3"])
+	})
+
+	t.Run("Test request transformation of invalid multipart/form-data", func(t *testing.T) {
+		formData, err := ioutil.ReadFile("./testdata/invalid-form-data.txt")
+		require.NoError(t, err)
+
+		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
+		require.NoError(t, err)
+		req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		require.Error(t, err)
+	})
+
 	t.Run("Test request transformation of invalid multipart/form-data", func(t *testing.T) {
 		formData, err := ioutil.ReadFile("./testdata/invalid-form-data.txt")
 		require.NoError(t, err)

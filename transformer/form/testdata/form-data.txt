@@ -7,6 +7,14 @@ Content-Disposition: form-data; name="field2"
 
 value2
 --xxx
+Content-Disposition: form-data; name="field3"
+
+value31
+--xxx
+Content-Disposition: form-data; name="field3"
+
+value32
+--xxx
 Content-Disposition: form-data; name="file"; filename="file"
 Content-Type: application/octet-stream
 Content-Transfer-Encoding: binary

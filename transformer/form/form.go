@@ -92,13 +92,22 @@ func (t *Transformation) transformFormData(req *http.Request) error {
 	}
 
 	for _, field := range t.fields {
-		value := data.Get(field)
-		newValue, err := t.action.Transform([]byte(value))
-		if err != nil {
-			return err
+		values, ok := data[field]
+		if !ok {
+			continue
 		}
 
-		data.Set(field, string(newValue))
+		var newValues []string
+
+		for _, value := range values {
+			newValue, err := t.action.Transform([]byte(value))
+			if err != nil {
+				return err
+			}
+			newValues = append(newValues, string(newValue))
+		}
+
+		data[field] = newValues
 	}
 
 	newBodyReader := strings.NewReader(data.Encode())

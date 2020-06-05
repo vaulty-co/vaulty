@@ -91,7 +91,23 @@ func TestForm(t *testing.T) {
 		require.Equal(t, "value2transformed", req.FormValue("field2"))
 	})
 
-	t.Run("Test unsupported content type does nothing", func(t *testing.T) {
+	t.Run("Test request transformation of array of application/x-www-form-urlencoded", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/request", strings.NewReader("field1=value11&field2=value2&field1=value12"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		require.NoError(t, err)
+		req.ParseForm()
+		require.Equal(t, []string{"value11transformed", "value12transformed"}, req.Form["field1"])
+	})
+
+	t.Run("Test request transformation with unsupported content type", func(t *testing.T) {
 		body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
 		req, _ := http.NewRequest("POST", "/request", body)
 		req.Header.Set("Content-Type", "application/json")

@@ -17,7 +17,7 @@ func TestForm(t *testing.T) {
 		return append(body, "transformed"...), nil
 	})
 
-	t.Run("Test building transformer from JSON", func(t *testing.T) {
+	t.Run("Test building transformation from JSON", func(t *testing.T) {
 		rawJson := []byte(`
 		{
 			"type":"form",
@@ -33,7 +33,7 @@ func TestForm(t *testing.T) {
 		require.NotNil(t, transformation)
 	})
 
-	t.Run("Test validation", func(t *testing.T) {
+	t.Run("Test transformation validation", func(t *testing.T) {
 		_, err := NewTransformation(&Params{})
 		require.EqualError(t, err, "No fields passed for the form transformation")
 	})
@@ -55,6 +55,24 @@ func TestForm(t *testing.T) {
 		req, err = tr.TransformRequest(req)
 		require.NoError(t, err)
 		require.Equal(t, "value1transformed", req.FormValue("field1"))
+	})
+
+	t.Run("Test request transformation of invalid multipart/form-data", func(t *testing.T) {
+		formData, err := ioutil.ReadFile("./testdata/invalid-form-data.txt")
+		require.NoError(t, err)
+
+		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
+		require.NoError(t, err)
+		req.Header = http.Header{"Content-Type": {`multipart/form-data; boundary=xxx`}}
+
+		tr, err := NewTransformation(&Params{
+			Fields: "field1",
+			Action: fakeAction,
+		})
+		require.NoError(t, err)
+
+		req, err = tr.TransformRequest(req)
+		require.Error(t, err)
 	})
 
 	t.Run("Test request transformation of application/x-www-form-urlencoded", func(t *testing.T) {

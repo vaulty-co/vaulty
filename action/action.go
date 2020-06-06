@@ -5,10 +5,19 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vaulty/vaulty/transform"
 )
 
-func Factory(rawInput interface{}, opts *Options) (transform.Transformer, error) {
+type Action interface {
+	Transform(body []byte) ([]byte, error)
+}
+
+type ActionFunc func(body []byte) ([]byte, error)
+
+func (a ActionFunc) Transform(body []byte) ([]byte, error) {
+	return a(body)
+}
+
+func Factory(rawInput interface{}, opts *Options) (Action, error) {
 	input := rawInput.(map[string]interface{})
 	switch input["type"] {
 	case "encrypt":

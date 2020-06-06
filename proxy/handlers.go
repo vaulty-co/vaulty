@@ -1,10 +1,7 @@
 package proxy
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/base64"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -31,7 +28,7 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			req.URL.Host = route.UpstreamURL.Host
 		}
 
-		err := p.TransformRequestBody(route, req)
+		req, err := p.TransformRequestBody(route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
@@ -52,7 +49,7 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 			return res
 		}
 
-		err := p.TransformResponseBody(ctxUserData(ctx).route, res)
+		res, err := p.TransformResponseBody(ctxUserData(ctx).route, res)
 		if err != nil {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
 		}
@@ -61,46 +58,22 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 	})
 }
 
-func (p *Proxy) TransformRequestBody(route *routing.Route, req *http.Request) error {
-	body, err := ioutil.ReadAll(req.Body)
+func (p *Proxy) TransformRequestBody(route *routing.Route, req *http.Request) (*http.Request, error) {
+	req, err := route.TransformRequest(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	body, err = route.TransformRequest(body)
-	if err != nil {
-		return err
-	}
-
-	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))
-	size := int64(len(body))
-
-	req.Header.Del("Content-Length")
-	req.Body = newBody
-	req.ContentLength = size
-
-	return nil
+	return req, nil
 }
 
-func (p *Proxy) TransformResponseBody(route *routing.Route, res *http.Response) error {
-	body, err := ioutil.ReadAll(res.Body)
+func (p *Proxy) TransformResponseBody(route *routing.Route, res *http.Response) (*http.Response, error) {
+	res, err := route.TransformResponse(res)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	body, err = route.TransformResponse(body)
-	if err != nil {
-		return err
-	}
-
-	newBody := ioutil.NopCloser(bufio.NewReader(bytes.NewBuffer(body)))
-	size := int64(len(body))
-
-	res.Header.Del("Content-Length")
-	res.Body = newBody
-	res.ContentLength = size
-
-	return nil
+	return res, nil
 }
 
 func (p *Proxy) HandleConnect() goproxy.HttpsHandler {

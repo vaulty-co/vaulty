@@ -2,13 +2,14 @@ package routing
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/vaulty/vaulty/action"
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/secrets"
-	"github.com/vaulty/vaulty/transform"
-	"github.com/vaulty/vaulty/transform/action"
+	"github.com/vaulty/vaulty/transformer"
 )
 
 type routeDef struct {
@@ -28,14 +29,22 @@ type fileDef struct {
 }
 
 type fileLoader struct {
-	enc            encrypt.Encrypter
-	secretsStorage secrets.SecretsStorage
+	enc                encrypt.Encrypter
+	secretsStorage     secrets.SecretsStorage
+	transformerFactory map[string]transformer.Factory
 }
 
-func NewFileLoader(enc encrypt.Encrypter, secretsStorage secrets.SecretsStorage) *fileLoader {
+type FileLoaderOptions struct {
+	Enc                encrypt.Encrypter
+	SecretsStorage     secrets.SecretsStorage
+	TransformerFactory map[string]transformer.Factory
+}
+
+func NewFileLoader(opts *FileLoaderOptions) *fileLoader {
 	return &fileLoader{
-		enc:            enc,
-		secretsStorage: secretsStorage,
+		enc:                opts.Enc,
+		secretsStorage:     opts.SecretsStorage,
+		transformerFactory: opts.TransformerFactory,
 	}
 }
 
@@ -59,12 +68,12 @@ func (l *fileLoader) Load(filename string) ([]*Route, error) {
 	var routes []*Route
 
 	for _, rd := range input.Routes {
-		requestTransformations, err := buildTransformations(rd.RequestTransformations, actionOptions)
+		requestTransformations, err := l.buildTransformations(rd.RequestTransformations, actionOptions)
 		if err != nil {
 			return nil, err
 		}
 
-		responseTransformations, err := buildTransformations(rd.ResponseTransformations, actionOptions)
+		responseTransformations, err := l.buildTransformations(rd.ResponseTransformations, actionOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -90,8 +99,8 @@ func (l *fileLoader) Load(filename string) ([]*Route, error) {
 	return routes, nil
 }
 
-func buildTransformations(rawTransformations []map[string]interface{}, actionOptions *action.Options) ([]transform.Transformer, error) {
-	var transformations []transform.Transformer
+func (l *fileLoader) buildTransformations(rawTransformations []map[string]interface{}, actionOptions *action.Options) ([]transformer.Transformer, error) {
+	var transformations []transformer.Transformer
 
 	for _, tr := range rawTransformations {
 		action, err := action.Factory(tr["action"], actionOptions)
@@ -99,7 +108,13 @@ func buildTransformations(rawTransformations []map[string]interface{}, actionOpt
 			return nil, err
 		}
 
-		transformation, err := transform.Factory(tr, action)
+		type_ := tr["type"].(string)
+		factory, ok := l.transformerFactory[type_]
+		if !ok {
+			return nil, fmt.Errorf(`Factory for transformation type "%s" was not found`, type_)
+		}
+
+		transformation, err := factory(tr, action)
 		if err != nil {
 			return nil, err
 		}

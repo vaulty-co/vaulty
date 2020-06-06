@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/vaulty/routing"
-	"github.com/vaulty/vaulty/transform"
+	"github.com/vaulty/vaulty/transformer"
 )
 
 type EchoHandler struct{}
@@ -26,9 +26,38 @@ func (EchoHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 var upstream = httptest.NewTLSServer(EchoHandler{})
 
-var fakeTransformer transform.Transformer = transform.TransformerFunc(func(body []byte) ([]byte, error) {
-	return append(body, " transformed"...), nil
-})
+type fakeTransformer struct{}
+
+func (f *fakeTransformer) TransformRequest(req *http.Request) (*http.Request, error) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	body = append(body, " transformed"...)
+
+	req.Body = ioutil.NopCloser(bytes.NewReader(body))
+	req.Header.Del("Content-Length")
+	req.ContentLength = int64(len(body))
+
+	return req, nil
+}
+
+func (f *fakeTransformer) TransformResponse(res *http.Response) (*http.Response, error) {
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	res.Body.Close()
+
+	body = append(body, " transformed"...)
+
+	res.Body = ioutil.NopCloser(bytes.NewReader(body))
+	res.Header.Del("Content-Length")
+	res.ContentLength = int64(len(body))
+
+	return res, nil
+}
 
 func TestInboundRoute(t *testing.T) {
 	route, err := routing.NewRoute(&routing.RouteParams{
@@ -36,8 +65,8 @@ func TestInboundRoute(t *testing.T) {
 		Method:                  http.MethodPost,
 		URL:                     "/tokenize",
 		Upstream:                upstream.URL,
-		RequestTransformations:  []transform.Transformer{fakeTransformer},
-		ResponseTransformations: []transform.Transformer{fakeTransformer},
+		RequestTransformations:  []transformer.Transformer{&fakeTransformer{}},
+		ResponseTransformations: []transformer.Transformer{&fakeTransformer{}},
 	})
 	require.NoError(t, err)
 
@@ -92,8 +121,8 @@ func TestOutboundRoute(t *testing.T) {
 		Name:                    "out",
 		Method:                  http.MethodPost,
 		URL:                     upstream.URL + "/tokenize",
-		RequestTransformations:  []transform.Transformer{fakeTransformer},
-		ResponseTransformations: []transform.Transformer{fakeTransformer},
+		RequestTransformations:  []transformer.Transformer{&fakeTransformer{}},
+		ResponseTransformations: []transformer.Transformer{&fakeTransformer{}},
 	})
 	require.NoError(t, err)
 

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/vaulty/vaulty/transform"
+	"github.com/vaulty/vaulty/transformer"
 )
 
 type RouteParams struct {
@@ -15,8 +15,8 @@ type RouteParams struct {
 	Method                  string
 	URL                     string
 	Upstream                string
-	RequestTransformations  []transform.Transformer
-	ResponseTransformations []transform.Transformer
+	RequestTransformations  []transformer.Transformer
+	ResponseTransformations []transformer.Transformer
 }
 
 type Route struct {
@@ -27,8 +27,8 @@ type Route struct {
 	method                  string
 	rawURL                  string
 	url                     *url.URL
-	requestTransformations  []transform.Transformer
-	responseTransformations []transform.Transformer
+	requestTransformations  []transformer.Transformer
+	responseTransformations []transformer.Transformer
 }
 
 func NewRoute(params *RouteParams) (*Route, error) {
@@ -104,23 +104,28 @@ func (r *Route) Match(req *http.Request) bool {
 	return urlMatch && (r.method == "*" || req.Method == r.method)
 }
 
-func (r *Route) TransformRequest(body []byte) ([]byte, error) {
-	return Transform(body, r.requestTransformations)
-}
-
-func (r *Route) TransformResponse(body []byte) ([]byte, error) {
-	return Transform(body, r.responseTransformations)
-}
-
-func Transform(body []byte, transformations []transform.Transformer) ([]byte, error) {
+func (r *Route) TransformRequest(req *http.Request) (*http.Request, error) {
 	var err error
 
-	for _, tr := range transformations {
-		body, err = tr.Transform(body)
+	for _, tr := range r.requestTransformations {
+		req, err = tr.TransformRequest(req)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return body, nil
+	return req, nil
+}
+
+func (r *Route) TransformResponse(res *http.Response) (*http.Response, error) {
+	var err error
+
+	for _, tr := range r.responseTransformations {
+		res, err = tr.TransformResponse(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return res, nil
 }

@@ -13,6 +13,7 @@ import (
 
 func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 	return goproxy.FuncReqHandler(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		debugRequest(req)
 
 		route := p.router.LookupRoute(req)
 
@@ -41,6 +42,8 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 
 func (p *Proxy) HandleResponse() goproxy.RespHandler {
 	return goproxy.FuncRespHandler(func(res *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+		debugResponse(res)
+
 		if ctxUserData(ctx).route == nil {
 			return res
 		}

@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/gobwas/glob"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/transformer"
 )
@@ -70,11 +69,8 @@ func NewRoute(params *RouteParams) (*Route, error) {
 func (r *Route) Match(req *http.Request) bool {
 	var matchingURL *url.URL
 
-	logrus.Infof("Checking first route: %v agains req: %v", r, req)
-
 	// no need to do any checking for inbound request and outbound route
 	if req.URL.Host == "inbound" && !r.IsInbound {
-		logrus.Info("Inbound request for outbound route")
 		return false
 	}
 
@@ -105,9 +101,7 @@ func (r *Route) Match(req *http.Request) bool {
 	// check if route URL matches request URL
 	// here we use filepath.Match which seems to be pretty good
 	// for our goal.
-	log.Infof("match: %s agains %s", r.rawURL, matchingURL.String())
-	log.Infof("match: %s agains %s", r.rawURL, matchingURL.String())
-	// urlMatch, err := filepath.Match(r.rawURL, matchingURL.String())
+	log.Debugf("Match route path %s against URL %s", r.rawURL, matchingURL.String())
 	urlMatch := r.g.Match(matchingURL.String())
 
 	return urlMatch && (r.method == "*" || req.Method == r.method)

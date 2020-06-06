@@ -2,6 +2,8 @@ package routing
 
 import (
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Router interface {
@@ -17,6 +19,8 @@ func NewRouter() *router {
 }
 
 func (r *router) LookupRoute(req *http.Request) *Route {
+	log.Debugf("LookupRoute for %s request to %s", req.Method, req.URL.String())
+
 	for _, route := range r.routes {
 		if route.Match(req) {
 			return route

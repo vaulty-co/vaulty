@@ -13,6 +13,11 @@ var proxyCommand = &cli.Command{
 	Name:  "proxy",
 	Usage: "run proxy server",
 	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "debug",
+			Usage:       "enable debug (exposes request and response bodies)",
+			Destination: &config.Debug,
+		},
 		&cli.StringFlag{
 			Name:        "address",
 			Aliases:     []string{"a"},

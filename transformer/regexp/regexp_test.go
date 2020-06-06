@@ -18,7 +18,7 @@ func TestRegexp(t *testing.T) {
 		{
 			"type":"regexp",
 			"expression":"\\d{1}(\\d{8})\\d+",
-			"submatch_number":1
+			"group_number":1
 		}
 		`)
 
@@ -44,10 +44,10 @@ func TestRegexp(t *testing.T) {
 		require.Contains(t, err.Error(), "error parsing regexp")
 	})
 
-	t.Run("Test transformation with one submatch", func(t *testing.T) {
+	t.Run("Test transformation with one group", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: \d(\d+)\d{4}`,
-			SubmatchNumber: 1,
+			Expression:  `number: \d(\d+)\d{4}`,
+			GroupNumber: 1,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				require.Equal(t, []byte("23456"), body)
 				return body, nil
@@ -60,10 +60,10 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Test transformation with multiple submatches", func(t *testing.T) {
+	t.Run("Test transformation with multiple groups", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: 2,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: 2,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				require.Equal(t, []byte("7890"), body)
 				return body, nil
@@ -76,10 +76,10 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Test transformation when submatch number exceeds possible number of submatches", func(t *testing.T) {
+	t.Run("Test transformation when group number exceeds possible number of groups", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: 5,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: 5,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				return []byte("xxxx"), nil
 			}),
@@ -92,8 +92,8 @@ func TestRegexp(t *testing.T) {
 		require.Contains(t, string(newBody), "number: 4242424242424242")
 
 		tr2, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: -1,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: -1,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				return []byte("xxxx"), nil
 			}),
@@ -108,8 +108,8 @@ func TestRegexp(t *testing.T) {
 
 	t.Run("Test transformation of multiple matches", func(t *testing.T) {
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: 2,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: 2,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				newBody := bytes.Repeat([]byte("x"), len(body))
 				return newBody, nil
@@ -129,8 +129,8 @@ func TestRegexp(t *testing.T) {
 		req.Header.Set("Content-Type", "plain/text")
 
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: 2,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: 2,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				newBody := bytes.Repeat([]byte("x"), len(body))
 				return newBody, nil
@@ -150,8 +150,8 @@ func TestRegexp(t *testing.T) {
 		}
 
 		tr, err := NewTransformation(&Params{
-			Expression:     `number: (\d+)(\d{4})`,
-			SubmatchNumber: 2,
+			Expression:  `number: (\d+)(\d{4})`,
+			GroupNumber: 2,
 			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
 				newBody := bytes.Repeat([]byte("x"), len(body))
 				return newBody, nil

@@ -12,16 +12,16 @@ import (
 )
 
 type Transformation struct {
-	expression     string
-	submatchNumber int
-	action         action.Action
-	re             *regexp.Regexp
+	expression  string
+	groupNumber int
+	action      action.Action
+	re          *regexp.Regexp
 }
 
 type Params struct {
-	Expression     string
-	SubmatchNumber int `mapstructure:"submatch_number"`
-	Action         action.Action
+	Expression  string
+	GroupNumber int `mapstructure:"group_number"`
+	Action      action.Action
 }
 
 var _ transformer.Transformer = (*Transformation)(nil)
@@ -42,9 +42,9 @@ func NewTransformation(params *Params) (*Transformation, error) {
 	var err error
 
 	t := &Transformation{
-		action:         params.Action,
-		expression:     params.Expression,
-		submatchNumber: params.SubmatchNumber,
+		action:      params.Action,
+		expression:  params.Expression,
+		groupNumber: params.GroupNumber,
 	}
 
 	t.re, err = regexp.Compile(t.expression)
@@ -95,7 +95,7 @@ func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, 
 func (t *Transformation) Transform(body []byte) ([]byte, error) {
 	// it does not make sence to do anything
 	// if user specified submatch that does not exist
-	if t.submatchNumber < 1 {
+	if t.groupNumber < 1 {
 		return body, nil
 	}
 
@@ -109,11 +109,11 @@ func (t *Transformation) Transform(body []byte) ([]byte, error) {
 		// If max position of submatch's end is
 		// greater of max position of result it
 		// means we don't have enough submatches
-		if t.submatchNumber*2+1 > len(result)-1 {
+		if t.groupNumber*2+1 > len(result)-1 {
 			return body, nil
 		}
 
-		n := t.submatchNumber
+		n := t.groupNumber
 		prefix := body[0:result[2*n]]
 		value := body[result[2*n]:result[2*n+1]]
 		suffix := body[result[2*n+1]:]

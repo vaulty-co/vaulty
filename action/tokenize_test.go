@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,5 +30,23 @@ func TestTokenizeDetokenize(t *testing.T) {
 	got, err := detokenize.Transform(token)
 	require.NoError(t, err)
 	require.Equal(t, plaintext, got)
+}
 
+func TestTokenizeWithFormat(t *testing.T) {
+	encrypter, err := encrypt.NewEncrypter("")
+	require.NoError(t, err)
+
+	secretsStorage := secrets.NewEphemeralStorage(encrypter)
+
+	plaintext := []byte("hello")
+
+	tokenize := &Tokenize{
+		secretsStorage: secretsStorage,
+		Format:         "email",
+	}
+	token, err := tokenize.Transform(plaintext)
+	require.NoError(t, err)
+	require.Contains(t, string(token), "tok")
+
+	fmt.Println(string(token))
 }

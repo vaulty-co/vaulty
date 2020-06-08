@@ -17,6 +17,9 @@ import (
 
 func Run(config *Config) error {
 	if config.Debug {
+		log.SetFormatter(&log.TextFormatter{
+			ForceColors: true,
+		})
 		log.SetLevel(log.DebugLevel)
 		fmt.Println("Warning! Body of requests and responses will be exposed in logs!")
 	}

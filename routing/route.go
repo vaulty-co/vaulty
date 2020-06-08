@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 
+	"github.com/gobwas/glob"
 	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/transformer"
 )
@@ -29,6 +29,7 @@ type Route struct {
 	url                     *url.URL
 	requestTransformations  []transformer.Transformer
 	responseTransformations []transformer.Transformer
+	g                       glob.Glob
 }
 
 func NewRoute(params *RouteParams) (*Route, error) {
@@ -53,6 +54,11 @@ func NewRoute(params *RouteParams) (*Route, error) {
 	}
 
 	route.UpstreamURL, err = url.Parse(params.Upstream)
+	if err != nil {
+		return nil, err
+	}
+
+	route.g, err = glob.Compile(route.rawURL)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +101,8 @@ func (r *Route) Match(req *http.Request) bool {
 	// check if route URL matches request URL
 	// here we use filepath.Match which seems to be pretty good
 	// for our goal.
-	urlMatch, err := filepath.Match(r.rawURL, matchingURL.String())
-	if err != nil {
-		log.Errorf("route URL has mailformed pattern: %s", r.rawURL)
-		return false
-	}
+	log.Debugf("Match route path %s against URL %s", r.rawURL, matchingURL.String())
+	urlMatch := r.g.Match(matchingURL.String())
 
 	return urlMatch && (r.method == "*" || req.Method == r.method)
 }

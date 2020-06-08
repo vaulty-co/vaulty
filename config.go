@@ -26,6 +26,9 @@ type Config struct {
 
 	// Password for the forward proxy
 	ProxyPassword string
+
+	// Debug mode, exposes bodies of request and response
+	Debug bool
 }
 
 func NewConfig() *Config {

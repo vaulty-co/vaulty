@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
@@ -15,6 +16,11 @@ import (
 )
 
 func Run(config *Config) error {
+	if config.Debug {
+		log.SetLevel(log.DebugLevel)
+		fmt.Println("Warning! Body of requests and responses will be exposed in logs!")
+	}
+
 	encrypter, err := encrypt.NewEncrypter(config.EncryptionKey)
 	if err != nil {
 		return err

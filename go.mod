@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/elazarl/goproxy v0.0.0-20200220113713-29f9e0ba54ea
 	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2
+	github.com/gobwas/glob v0.2.3
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/rs/xid v1.2.1

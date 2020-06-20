@@ -4,7 +4,7 @@
 
 Vaulty is a reverse and forward proxy that modifies (encrypt, decrypt, tokenize, etc.) HTTP(s) data on the fly and securely stores it in a safe.
 
-![](https://vaulty.co/img/flow.svg)
+![](https://docs.vaulty.co/img/flow.svg)
 
 Vaulty can be used for the following:
 
@@ -18,8 +18,8 @@ Currently you can play with Vaulty, think about how you would like to use it, an
 
 Links:
 
- * [Documentation](https://vaulty.co/docs)
- * [Cookbooks](https://vaulty.co/docs/cookbooks/intro)
+ * [Documentation](https://docs.vaulty.co)
+ * [Cookbooks](https://docs.vaulty.co/cookbooks/intro)
 
 ## Prerequisites
 
@@ -79,4 +79,4 @@ In postman-echo response you can see that it received an encrypted card.number i
 {"args":{},"data":{"card":{"number":"NDI0MjQyNDI0MjQyNDI0Mg(demo encryption)","exp":"10/22"}},"files":{},"form":{},"headers":{"x-forwarded-proto":"https","x-forwarded-port":"443","host":"127.0.0.1","x-amzn-trace-id":"Root=1-5ec1412f-6ab8d3f28110822b8a425e81","content-length":"83","user-agent":"curl/7.64.1","accept":"*/*","content-type":"application/json","accept-encoding":"gzip"},"json":{"card":{"number":"NDI0MjQyNDI0MjQyNDI0Mg(demo encryption)","exp":"10/22"}},"url":"https://127.0.0.1/post"}%
 ```
 
-That's it for the quick start! More information about Vaulty configuration, routes, transformations can be found here: https://vaulty.co/docs
+That's it for the quick start! More information about Vaulty configuration, routes, transformations can be found here: https://docs.vaulty.co/

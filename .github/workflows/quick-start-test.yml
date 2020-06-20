@@ -23,4 +23,7 @@ jobs:
     
     steps:      
     - name: Run a one-line script
-      run: curl http://localhost:8080/post -d '{ "card": { "number": "4242424242424242", "exp": "10/22" } }' -H "Content-Type: application/json"
+      run: |
+        curl http://localhost:8080/post \
+        -d '{ "card": { "number": "4242424242424242", "exp": "10/22" } }' \
+        -H "Content-Type: application/json"

@@ -7,7 +7,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches: '*'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -20,6 +20,7 @@ jobs:
         image: vaulty/vaulty
         ports:
         - 8080:8080
-
+    
+    steps:      
     - name: Run a one-line script
       run: curl http://localhost:8080/post -d '{ "card": { "number": "4242424242424242", "exp": "10/22" } }' -H "Content-Type: application/json"

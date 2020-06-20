@@ -20,10 +20,36 @@ jobs:
         image: vaulty/vaulty
         ports:
         - 8080:8080
+        volumes:
+        - /.vaulty:/.vaulty
+
     
     steps:      
     - name: Run a one-line script
       run: |
+        mkdir /.vaulty
+        echo "$(cat <<EOM
+        {
+          "routes":[
+            {
+              "name":"in",
+              "method":"POST",
+              "url":"/post",
+              "upstream":"https://postman-echo.com",
+              "request_transformations":[
+                {
+                  "type":"json",
+                  "expression":"card.number",
+                  "action":{
+                    "type":"encrypt"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        EOM
+        )" > /.vaulty/routes.json
         curl http://localhost:8080/post \
         -d '{ "card": { "number": "4242424242424242", "exp": "10/22" } }' \
         -H "Content-Type: application/json"

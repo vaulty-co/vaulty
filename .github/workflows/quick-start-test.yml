@@ -27,7 +27,6 @@ jobs:
     steps:      
     - name: Run a one-line script
       run: |
-        mkdir /.vaulty
         echo "$(cat <<EOM
         {
           "routes":[

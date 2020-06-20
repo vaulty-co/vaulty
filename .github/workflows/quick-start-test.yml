@@ -21,7 +21,7 @@ jobs:
         ports:
         - 8080:8080
         volumes:
-        - /.vaulty:/.vaulty
+        - /tmp:/.vaulty
 
     
     steps:      
@@ -48,7 +48,7 @@ jobs:
           ]
         }
         EOM
-        )" > /.vaulty/routes.json
+        )" > /tmp/routes.json
         curl http://localhost:8080/post \
         -d '{ "card": { "number": "4242424242424242", "exp": "10/22" } }' \
         -H "Content-Type: application/json"

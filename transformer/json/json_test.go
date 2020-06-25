@@ -129,6 +129,23 @@ func TestJson(t *testing.T) {
 		require.Equal(t, string(want), string(newBody))
 	})
 
+	t.Run("Test transformation with multiple paths", func(t *testing.T) {
+		tr, err := NewTransformation(&Params{
+			Expression: "card.number, card.cvc",
+			Action: action.ActionFunc(func(body []byte) ([]byte, error) {
+				return append(body, '+', body[0]), nil
+			}),
+		})
+		require.NoError(t, err)
+
+		body := []byte(`{"card": {"number":"1234", "cvc":"5678"}}`)
+
+		want := []byte(`{"card": {"number":"1234+1", "cvc":"5678+5"}}`)
+		newBody, err := tr.Transform(body)
+		require.NoError(t, err)
+		require.Equal(t, string(want), string(newBody))
+	})
+
 	t.Run("Test request transformation", func(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/request", strings.NewReader(`{"name": "John"}`))
 		req.Header.Set("Content-Type", "application/json")

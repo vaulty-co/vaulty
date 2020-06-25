@@ -35,6 +35,7 @@ func Run(config *Config) error {
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{
 		Enc:            encrypter,
 		SecretsStorage: secretsStorage,
+		Salt:           config.Salt,
 		TransformerFactory: map[string]transformer.Factory{
 			"json":   json.Factory,
 			"regexp": regexp.Factory,

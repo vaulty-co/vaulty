@@ -53,6 +53,12 @@ var proxyCommand = &cli.Command{
 			EnvVars:     []string{"ENCRYPTION_KEY"},
 			Destination: &config.EncryptionKey,
 		},
+		&cli.StringFlag{
+			Name:        "hash-salt",
+			Usage:       "salt for the hash action",
+			EnvVars:     []string{"HASH_SALT"},
+			Destination: &config.Salt,
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if err := config.GenerateMissedValues(); err != nil {

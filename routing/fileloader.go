@@ -31,12 +31,14 @@ type fileDef struct {
 type fileLoader struct {
 	enc                encrypt.Encrypter
 	secretsStorage     secrets.SecretsStorage
+	salt               string
 	transformerFactory map[string]transformer.Factory
 }
 
 type FileLoaderOptions struct {
 	Enc                encrypt.Encrypter
 	SecretsStorage     secrets.SecretsStorage
+	Salt               string
 	TransformerFactory map[string]transformer.Factory
 }
 
@@ -44,6 +46,7 @@ func NewFileLoader(opts *FileLoaderOptions) *fileLoader {
 	return &fileLoader{
 		enc:                opts.Enc,
 		secretsStorage:     opts.SecretsStorage,
+		salt:               opts.Salt,
 		transformerFactory: opts.TransformerFactory,
 	}
 }
@@ -63,6 +66,7 @@ func (l *fileLoader) Load(filename string) ([]*Route, error) {
 	actionOptions := &action.Options{
 		Encrypter:      l.enc,
 		SecretsStorage: l.secretsStorage,
+		Salt:           l.salt,
 	}
 
 	var routes []*Route

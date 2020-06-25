@@ -32,7 +32,8 @@ func debugResponse(res *http.Response) {
 		return
 	}
 
-	if res.Request.Method == "POST" || res.Request.Method == "PUT" || res.Request.Method == "PATCH" {
+	switch res.Request.Method {
+	case "GET", "POST", "PUT", "PATCH":
 		contentType := res.Header.Get("Content-Type")
 		switch mediaType, _, _ := mime.ParseMediaType(contentType); mediaType {
 		case "application/json", "multipart/form-data", "application/x-www-form-urlencoded", "plain/text":

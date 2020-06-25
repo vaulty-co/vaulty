@@ -18,8 +18,8 @@ import (
 )
 
 type Transformation struct {
-	action     action.Action
-	expression string
+	action      action.Action
+	expressions []string
 }
 
 type Params struct {
@@ -43,13 +43,17 @@ func Factory(rawParams map[string]interface{}, act action.Action) (transformer.T
 }
 
 func NewTransformation(params *Params) (*Transformation, error) {
-	if strings.Count(params.Expression, "#") > 1 {
-		return nil, fmt.Errorf("Nested arrays are not supported, but used in the expression: %s", params.Expression)
+	expressions := strings.Split(strings.ReplaceAll(params.Expression, " ", ""), ",")
+
+	for _, exp := range expressions {
+		if strings.Count(exp, "#") > 1 {
+			return nil, fmt.Errorf("Nested arrays are not supported, but used in the expression: %s", exp)
+		}
 	}
 
 	t := &Transformation{
-		expression: params.Expression,
-		action:     params.Action,
+		expressions: expressions,
+		action:      params.Action,
 	}
 
 	return t, nil
@@ -105,29 +109,42 @@ func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, 
 }
 
 func (t *Transformation) Transform(body []byte) ([]byte, error) {
-	result := gjson.GetBytes(body, t.expression)
+	var err error
+
+	for _, expression := range t.expressions {
+		body, err = t.TransformWithExpression(body, expression)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return body, nil
+}
+
+func (t *Transformation) TransformWithExpression(body []byte, expression string) ([]byte, error) {
+	result := gjson.GetBytes(body, expression)
 
 	// Currently we perform transformations only over strings
 	// and arrays (one level only)
 	switch {
 	case result.Type == gjson.String:
-		return t.transformString(body, result)
+		return t.transformString(body, result, expression)
 	case result.IsArray():
-		return t.transformArray(body, result)
+		return t.transformArray(body, result, expression)
 	default:
 		log.Warnf("Unsupported type of json expression result: %s", result.Type)
 		return body, nil
 	}
 }
 
-func (t *Transformation) transformString(body []byte, result gjson.Result) ([]byte, error) {
+func (t *Transformation) transformString(body []byte, result gjson.Result, expression string) ([]byte, error) {
 	value := result.Str
 	newValue, err := t.action.Transform([]byte(value))
 	if err != nil {
 		return body, nil
 	}
 
-	newBody, err := sjson.SetBytes(body, t.expression, string(newValue))
+	newBody, err := sjson.SetBytes(body, expression, string(newValue))
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +152,7 @@ func (t *Transformation) transformString(body []byte, result gjson.Result) ([]by
 	return newBody, nil
 }
 
-func (t *Transformation) transformArray(body []byte, result gjson.Result) ([]byte, error) {
+func (t *Transformation) transformArray(body []byte, result gjson.Result, expression string) ([]byte, error) {
 	var originalValues []string
 
 	result.ForEach(func(_, res gjson.Result) bool {
@@ -163,7 +180,7 @@ func (t *Transformation) transformArray(body []byte, result gjson.Result) ([]byt
 			return nil, err
 		}
 
-		setExpression := strings.Replace(t.expression, "#", strconv.Itoa(index), 1)
+		setExpression := strings.Replace(expression, "#", strconv.Itoa(index), 1)
 
 		newBody, err = sjson.SetBytes(newBody, setExpression, string(newValue))
 		if err != nil {

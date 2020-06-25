@@ -1,7 +1,6 @@
 package action
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -47,6 +46,4 @@ func TestTokenizeWithFormat(t *testing.T) {
 	token, err := tokenize.Transform(plaintext)
 	require.NoError(t, err)
 	require.Contains(t, string(token), "tok")
-
-	fmt.Println(string(token))
 }

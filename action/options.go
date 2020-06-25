@@ -8,4 +8,5 @@ import (
 type Options struct {
 	Encrypter      encrypt.Encrypter
 	SecretsStorage secrets.SecretsStorage
+	Salt           string
 }

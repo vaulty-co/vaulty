@@ -63,6 +63,15 @@ func Factory(rawInput interface{}, opts *Options) (Action, error) {
 			return nil, err
 		}
 		return result, nil
+	case "hash":
+		result := &Hash{
+			salt: opts.Salt,
+		}
+		err := mapstructure.Decode(input, result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Unknown action type %s", input["type"]))
 	}

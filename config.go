@@ -29,6 +29,9 @@ type Config struct {
 
 	// Debug mode, exposes bodies of request and response
 	Debug bool
+
+	// Salt for hash action
+	Salt string
 }
 
 func NewConfig() *Config {

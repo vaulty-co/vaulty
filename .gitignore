@@ -2,3 +2,4 @@
 /.tags
 /card.json
 /data.json
+.env

@@ -17,5 +17,5 @@ func NewEncrypter(key string) (Encrypter, error) {
 		return nil, fmt.Errorf("invalid key length: %d. Should be 32 bytes", len(key))
 	}
 
-	return NewAesGcm(key)
+	return NewAesGcm([]byte(key))
 }

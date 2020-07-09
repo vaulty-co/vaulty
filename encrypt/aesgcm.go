@@ -13,8 +13,8 @@ type AesGcm struct {
 	block cipher.Block
 }
 
-func NewAesGcm(key string) (Encrypter, error) {
-	block, err := aes.NewCipher([]byte(key))
+func NewAesGcm(key []byte) (Encrypter, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}

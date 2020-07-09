@@ -13,18 +13,18 @@ import (
 	"github.com/vaulty/vaulty/encryption"
 )
 
-type Params struct {
-	KeyID  string
-	Region string
-}
-
 func Factory(config *vaulty.Config) *encryption.Encrypter {
 	return nil
 }
 
 type payload struct {
-	Key  []byte
-	Data []byte
+	EncryptedKey []byte
+	Data         []byte
+}
+
+type Params struct {
+	KeyID  string
+	Region string
 }
 
 type encrypter struct {
@@ -49,6 +49,7 @@ func NewEncrypter(params *Params) (*encrypter, error) {
 }
 
 func (e *encrypter) Encrypt(plaintext []byte) ([]byte, error) {
+	// API call to AWS KMS
 	output, err := e.client.GenerateDataKey(&kms.GenerateDataKeyInput{
 		KeyId:   &e.keyID,
 		KeySpec: aws.String("AES_256"),
@@ -64,11 +65,11 @@ func (e *encrypter) Encrypt(plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// encode encrypted key together with ciphertext
 	buf := &bytes.Buffer{}
+	// link together encrypted encryption key and ciphertext
 	err = gob.NewEncoder(buf).Encode(&payload{
-		Key:  output.CiphertextBlob,
-		Data: ciphertext,
+		EncryptedKey: output.CiphertextBlob,
+		Data:         ciphertext,
 	})
 	if err != nil {
 		return nil, err
@@ -91,8 +92,9 @@ func (e *encrypter) Decrypt(message []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	// decrypt encrypted key (API call to AWS KMS)
 	output, err := e.client.Decrypt(&kms.DecryptInput{
-		CiphertextBlob: p.Key,
+		CiphertextBlob: p.EncryptedKey,
 	})
 
 	enc, err := encrypt.NewAesGcm(output.Plaintext)

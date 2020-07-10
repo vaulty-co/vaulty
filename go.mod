@@ -7,6 +7,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20200426045556-49ad98f6dac1
 	github.com/elazarl/goproxy/ext v0.0.0-20200426045556-49ad98f6dac1
 	github.com/gobwas/glob v0.2.3
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.2
 	github.com/rs/xid v1.2.1

@@ -4,22 +4,30 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/hex"
+	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
-	"github.com/vaulty/vaulty"
+	"github.com/vaulty/vaulty/config"
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/encryption"
 )
 
-func Factory(config *vaulty.Config) *encryption.Encrypter {
-	return nil
-}
+var _ encryption.Encrypter = (*AwsKms)(nil)
 
-type payload struct {
-	EncryptedKey []byte
-	Data         []byte
+func Factory(conf *config.Config) (encryption.Encrypter, error) {
+	keyID := conf.Encryption.AWSKMSKeyID
+	if keyID == "" {
+		keyID = "alias/" + conf.Encryption.AWSKMSKeyAlias
+	}
+
+	params := &Params{
+		Region: conf.Encryption.AWSKMSRegion,
+		KeyID:  keyID,
+	}
+
+	return NewEncrypter(params)
 }
 
 type Params struct {
@@ -27,12 +35,20 @@ type Params struct {
 	Region string
 }
 
-type encrypter struct {
+type AwsKms struct {
 	client *kms.KMS
 	keyID  string
 }
 
-func NewEncrypter(params *Params) (*encrypter, error) {
+func NewEncrypter(params *Params) (*AwsKms, error) {
+	if params.Region == "" {
+		return nil, errors.New("AWS KMS Region is not confured")
+	}
+
+	if params.KeyID == "" {
+		return nil, errors.New("AWS KMS Key ID is not confured")
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Region: &params.Region,
 	})
@@ -40,7 +56,7 @@ func NewEncrypter(params *Params) (*encrypter, error) {
 		return nil, err
 	}
 
-	enc := &encrypter{
+	enc := &AwsKms{
 		client: kms.New(sess),
 		keyID:  params.KeyID,
 	}
@@ -48,7 +64,12 @@ func NewEncrypter(params *Params) (*encrypter, error) {
 	return enc, nil
 }
 
-func (e *encrypter) Encrypt(plaintext []byte) ([]byte, error) {
+type payload struct {
+	EncryptedKey []byte
+	Data         []byte
+}
+
+func (e *AwsKms) Encrypt(plaintext []byte) ([]byte, error) {
 	// API call to AWS KMS
 	output, err := e.client.GenerateDataKey(&kms.GenerateDataKeyInput{
 		KeyId:   &e.keyID,
@@ -82,7 +103,7 @@ func (e *encrypter) Encrypt(plaintext []byte) ([]byte, error) {
 	return hexPayload, nil
 }
 
-func (e *encrypter) Decrypt(message []byte) ([]byte, error) {
+func (e *AwsKms) Decrypt(message []byte) ([]byte, error) {
 	p := &payload{}
 
 	plainPayload := make([]byte, hex.DecodedLen(len(message)))

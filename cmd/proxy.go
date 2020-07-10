@@ -51,8 +51,7 @@ var proxyCommand = &cli.Command{
 			Name:        "key",
 			Aliases:     []string{"k"},
 			Usage:       "forward proxy password",
-			EnvVars:     []string{"ENCRYPTION_KEY"},
-			Destination: &conf.EncryptionKey,
+			Destination: &conf.Encryption.Key,
 		},
 		&cli.StringFlag{
 			Name:        "hash-salt",

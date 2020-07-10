@@ -19,10 +19,16 @@ import (
 	"github.com/vaulty/vaulty/transformer/regexp"
 )
 
-var Encrypters = map[string]encryption.Factory{
+var encrypters = map[string]encryption.Factory{
 	"awskms": awskms.Factory,
 	"aesgcm": aesgcm.Factory,
 	"none":   noneenc.Factory,
+}
+
+var transformers = map[string]transformer.Factory{
+	"json":   json.Factory,
+	"regexp": regexp.Factory,
+	"form":   form.Factory,
 }
 
 func Run(conf *config.Config) error {
@@ -34,7 +40,7 @@ func Run(conf *config.Config) error {
 		fmt.Println("Warning! Body of requests and responses will be exposed in logs!")
 	}
 
-	encrypter, err := Encrypters[conf.Encryption.Type](conf)
+	encrypter, err := encrypters[conf.Encryption.Type](conf)
 	if err != nil {
 		return err
 	}
@@ -43,14 +49,10 @@ func Run(conf *config.Config) error {
 
 	// Create router and load routes from file into router
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{
-		Enc:            encrypter,
-		SecretsStorage: secretsStorage,
-		Salt:           conf.Salt,
-		TransformerFactory: map[string]transformer.Factory{
-			"json":   json.Factory,
-			"regexp": regexp.Factory,
-			"form":   form.Factory,
-		},
+		Enc:                encrypter,
+		SecretsStorage:     secretsStorage,
+		Salt:               conf.Salt,
+		TransformerFactory: transformers,
 	})
 	routes, err := loader.Load(conf.RoutesFile)
 	if err != nil {

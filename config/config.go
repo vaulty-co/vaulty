@@ -14,9 +14,6 @@ import (
 
 type (
 	Config struct {
-		// Encryption key that should be used for AES GCM encryption
-		EncryptionKey string
-
 		// Network address that Vaulty should listen on
 		Address string
 
@@ -40,7 +37,10 @@ type (
 
 	Encryption struct {
 		// Encryption Type
-		Type string `envconfig:"VAULTY_ENCRYPTION_TYPE"`
+		Type string `envconfig:"VAULTY_ENCRYPTION_TYPE" default:"none"`
+
+		// Encryption key that should be used for AES GCM encryption
+		Key string `envconfig:"VAULTY_ENCRYPTION_KEY"`
 
 		// Region of AWS KMS Master Key
 		AWSKMSRegion string `envconfig:"VAULTY_ENCRYPTION_AWS_KMS_REGION"`

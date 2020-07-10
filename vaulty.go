@@ -6,7 +6,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/config"
-	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/encryption"
+	"github.com/vaulty/vaulty/encryption/aesgcm"
+	"github.com/vaulty/vaulty/encryption/awskms"
+	"github.com/vaulty/vaulty/encryption/noneenc"
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
@@ -15,6 +18,12 @@ import (
 	"github.com/vaulty/vaulty/transformer/json"
 	"github.com/vaulty/vaulty/transformer/regexp"
 )
+
+var Encrypters = map[string]encryption.Factory{
+	"awskms": awskms.Factory,
+	"aesgcm": aesgcm.Factory,
+	"none":   noneenc.Factory,
+}
 
 func Run(conf *config.Config) error {
 	if conf.Debug {
@@ -25,7 +34,7 @@ func Run(conf *config.Config) error {
 		fmt.Println("Warning! Body of requests and responses will be exposed in logs!")
 	}
 
-	encrypter, err := encrypt.NewEncrypter(conf.EncryptionKey)
+	encrypter, err := Encrypters[conf.Encryption.Type](conf)
 	if err != nil {
 		return err
 	}

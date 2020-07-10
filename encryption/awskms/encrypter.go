@@ -18,7 +18,7 @@ var _ encryption.Encrypter = (*AwsKms)(nil)
 
 func Factory(conf *config.Config) (encryption.Encrypter, error) {
 	keyID := conf.Encryption.AWSKMSKeyID
-	if keyID == "" {
+	if keyID == "" && conf.Encryption.AWSKMSKeyAlias != "" {
 		keyID = "alias/" + conf.Encryption.AWSKMSKeyAlias
 	}
 
@@ -75,6 +75,9 @@ func (e *AwsKms) Encrypt(plaintext []byte) ([]byte, error) {
 		KeyId:   &e.keyID,
 		KeySpec: aws.String("AES_256"),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	enc, err := encrypt.NewAesGcm(output.Plaintext)
 	if err != nil {

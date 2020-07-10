@@ -10,6 +10,22 @@ import (
 )
 
 func TestEncrypterFactory(t *testing.T) {
+	_, err := Factory(&config.Config{
+		Encryption: &config.Encryption{
+			AWSKMSRegion: "eu-central-1",
+			AWSKMSKeyID:  "",
+		},
+	})
+	require.EqualError(t, err, "AWS KMS Key ID is not confured")
+
+	_, err = Factory(&config.Config{
+		Encryption: &config.Encryption{
+			AWSKMSRegion:   "eu-central-1",
+			AWSKMSKeyAlias: "hello",
+		},
+	})
+	require.NoError(t, err)
+
 	enc, err := Factory(&config.Config{
 		Encryption: &config.Encryption{
 			AWSKMSRegion: "eu-central-1",

@@ -1,4 +1,4 @@
-package vaulty
+package config
 
 import (
 	"crypto/rand"
@@ -8,34 +8,57 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/vaulty/vaulty/ca"
 )
 
-type Config struct {
-	// Encryption key that should be used for AES GCM encryption
-	EncryptionKey string
+type (
+	Config struct {
+		// Encryption key that should be used for AES GCM encryption
+		EncryptionKey string
 
-	// Network address that Vaulty should listen on
-	Address string
+		// Network address that Vaulty should listen on
+		Address string
 
-	// File containing route definitions
-	RoutesFile string
+		// File containing route definitions
+		RoutesFile string
 
-	// Path to CA files
-	CAPath string
+		// Path to CA files
+		CAPath string
 
-	// Password for the forward proxy
-	ProxyPassword string
+		// Password for the forward proxy
+		ProxyPassword string
 
-	// Debug mode, exposes bodies of request and response
-	Debug bool
+		// Debug mode, exposes bodies of request and response
+		Debug bool
 
-	// Salt for hash action
-	Salt string
-}
+		// Salt for hash action
+		Salt string
+
+		Encryption *Encryption
+	}
+
+	Encryption struct {
+		// Encryption Type
+		Type string `envconfig:"VAULTY_ENCRYPTION_TYPE"`
+
+		// Region of AWS KMS Master Key
+		AWSKMSRegion string `envconfig:"VAULTY_ENCRYPTION_AWS_KMS_REGION"`
+
+		// ID of AWS KMS Master Key (optional if KMSKeyAlias is set)
+		AWSKMSKeyID string `envconfig:"VAULTY_ENCRYPTION_AWS_KMS_KEY_ID"`
+
+		// Alias of AWS KMS Master Key (optional if KMSKeyID is set)
+		AWSKMSKeyAlias string `envconfig:"VAULTY_ENCRYPTION_AWS_KMS_KEY_ALIAS"`
+	}
+)
 
 func NewConfig() *Config {
 	return &Config{}
+}
+
+func (c *Config) FromEnvironment() error {
+	return envconfig.Process("vaulty", c)
 }
 
 // GenerateMissedValues generates proxy password if it's not provided

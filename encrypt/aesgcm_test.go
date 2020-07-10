@@ -7,7 +7,7 @@ import (
 )
 
 func TestAesGCM(t *testing.T) {
-	enc, err := NewAesGcm("776f726420746f206120736563726574")
+	enc, err := NewAesGcm([]byte("776f726420746f206120736563726574"))
 	require.NoError(t, err)
 
 	ciphertext, err := enc.Encrypt([]byte("hello"))

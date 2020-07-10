@@ -5,9 +5,10 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/vaulty/vaulty"
+	"github.com/vaulty/vaulty/config"
 )
 
-var config = vaulty.NewConfig()
+var conf = config.NewConfig()
 
 var proxyCommand = &cli.Command{
 	Name:  "proxy",
@@ -16,55 +17,59 @@ var proxyCommand = &cli.Command{
 		&cli.BoolFlag{
 			Name:        "debug",
 			Usage:       "enable debug (exposes request and response bodies)",
-			Destination: &config.Debug,
+			Destination: &conf.Debug,
 		},
 		&cli.StringFlag{
 			Name:        "address",
 			Aliases:     []string{"a"},
 			Value:       ":8080",
 			Usage:       "address that vaulty should listen on",
-			Destination: &config.Address,
+			Destination: &conf.Address,
 		},
 		&cli.StringFlag{
 			Name:        "routes-file",
 			Aliases:     []string{"r"},
 			Value:       "./routes.json",
 			Usage:       "routes file",
-			Destination: &config.RoutesFile,
+			Destination: &conf.RoutesFile,
 		},
 		&cli.StringFlag{
 			Name:        "ca-path",
 			Aliases:     []string{"ca"},
 			Value:       "./",
 			Usage:       "path to CA key and cert",
-			Destination: &config.CAPath,
+			Destination: &conf.CAPath,
 		},
 		&cli.StringFlag{
 			Name:        "proxy-pass",
 			Aliases:     []string{"p"},
 			Usage:       "forward proxy password",
 			EnvVars:     []string{"PROXY_PASS"},
-			Destination: &config.ProxyPassword,
+			Destination: &conf.ProxyPassword,
 		},
 		&cli.StringFlag{
 			Name:        "key",
 			Aliases:     []string{"k"},
 			Usage:       "forward proxy password",
 			EnvVars:     []string{"ENCRYPTION_KEY"},
-			Destination: &config.EncryptionKey,
+			Destination: &conf.EncryptionKey,
 		},
 		&cli.StringFlag{
 			Name:        "hash-salt",
 			Usage:       "salt for the hash action",
 			EnvVars:     []string{"HASH_SALT"},
-			Destination: &config.Salt,
+			Destination: &conf.Salt,
 		},
 	},
 	Action: func(c *cli.Context) error {
-		if err := config.GenerateMissedValues(); err != nil {
+		if err := conf.FromEnvironment(); err != nil {
+			return err
+		}
+
+		if err := conf.GenerateMissedValues(); err != nil {
 			return fmt.Errorf("Error with generating missed values: %s", err)
 		}
 
-		return vaulty.Run(config)
+		return vaulty.Run(conf)
 	},
 }

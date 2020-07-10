@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/vaulty/vaulty/config"
 	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
@@ -15,8 +16,8 @@ import (
 	"github.com/vaulty/vaulty/transformer/regexp"
 )
 
-func Run(config *Config) error {
-	if config.Debug {
+func Run(conf *config.Config) error {
+	if conf.Debug {
 		log.SetFormatter(&log.TextFormatter{
 			ForceColors: true,
 		})
@@ -24,7 +25,7 @@ func Run(config *Config) error {
 		fmt.Println("Warning! Body of requests and responses will be exposed in logs!")
 	}
 
-	encrypter, err := encrypt.NewEncrypter(config.EncryptionKey)
+	encrypter, err := encrypt.NewEncrypter(conf.EncryptionKey)
 	if err != nil {
 		return err
 	}
@@ -35,33 +36,33 @@ func Run(config *Config) error {
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{
 		Enc:            encrypter,
 		SecretsStorage: secretsStorage,
-		Salt:           config.Salt,
+		Salt:           conf.Salt,
 		TransformerFactory: map[string]transformer.Factory{
 			"json":   json.Factory,
 			"regexp": regexp.Factory,
 			"form":   form.Factory,
 		},
 	})
-	routes, err := loader.Load(config.RoutesFile)
+	routes, err := loader.Load(conf.RoutesFile)
 	if err != nil {
 		return err
 	}
 	if len(routes) == 0 {
-		return fmt.Errorf("No routes were loaded from file: %s", config.RoutesFile)
+		return fmt.Errorf("No routes were loaded from file: %s", conf.RoutesFile)
 	}
 
 	router := routing.NewRouter()
 	router.SetRoutes(routes)
 
 	proxy, err := proxy.NewProxy(&proxy.Options{
-		ProxyPassword: config.ProxyPassword,
-		CAPath:        config.CAPath,
+		ProxyPassword: conf.ProxyPassword,
+		CAPath:        conf.CAPath,
 		Router:        router,
 	})
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("==> Vaulty proxy server started on %v!\n", config.Address)
-	return http.ListenAndServe(config.Address, proxy)
+	fmt.Printf("==> Vaulty proxy server started on %v!\n", conf.Address)
+	return http.ListenAndServe(conf.Address, proxy)
 }

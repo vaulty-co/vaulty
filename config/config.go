@@ -54,7 +54,7 @@ type (
 )
 
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{Encryption: &Encryption{}}
 }
 
 func (c *Config) FromEnvironment() error {

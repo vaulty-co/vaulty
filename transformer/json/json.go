@@ -141,7 +141,7 @@ func (t *Transformation) transformString(body []byte, result gjson.Result, expre
 	value := result.Str
 	newValue, err := t.action.Transform([]byte(value))
 	if err != nil {
-		return body, nil
+		return nil, err
 	}
 
 	newBody, err := sjson.SetBytes(body, expression, string(newValue))

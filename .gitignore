@@ -2,3 +2,6 @@
 /.tags
 /card.json
 /data.json
+.env
+ca.key
+ca.cert

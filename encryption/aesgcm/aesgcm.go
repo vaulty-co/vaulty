@@ -1,4 +1,4 @@
-package encrypt
+package aesgcm
 
 import (
 	"crypto/aes"
@@ -6,14 +6,31 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
+
+	"github.com/vaulty/vaulty/config"
+	"github.com/vaulty/vaulty/encryption"
 )
+
+var _ encryption.Encrypter = (*AesGcm)(nil)
+
+func Factory(conf *config.Config) (encryption.Encrypter, error) {
+	key := []byte(conf.Encryption.Key)
+
+	// We use AES-256 which requires 32 bytes key
+	if len(key) != 32 {
+		return nil, fmt.Errorf("invalid key length: %d. Should be 32 bytes", len(key))
+	}
+
+	return NewEncrypter(key)
+}
 
 type AesGcm struct {
 	block cipher.Block
 }
 
-func NewAesGcm(key []byte) (Encrypter, error) {
+func NewEncrypter(key []byte) (encryption.Encrypter, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err

@@ -1,14 +1,21 @@
-package encrypt
+package noneenc
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vaulty/vaulty/config"
+	"github.com/vaulty/vaulty/encryption"
 )
 
-func TestAesGCM(t *testing.T) {
-	enc, err := NewAesGcm([]byte("776f726420746f206120736563726574"))
+func TestFactory(t *testing.T) {
+	enc, err := Factory(&config.Config{})
 	require.NoError(t, err)
+	require.Implements(t, (*encryption.Encrypter)(nil), enc)
+}
+
+func TestNone(t *testing.T) {
+	enc := &None{}
 
 	ciphertext, err := enc.Encrypt([]byte("hello"))
 	require.NoError(t, err)

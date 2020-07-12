@@ -29,14 +29,14 @@ func (p *Proxy) HandleRequest() goproxy.ReqHandler {
 			req.URL.Host = route.UpstreamURL.Host
 		}
 
-		req, err := p.TransformRequestBody(route, req)
+		newReq, err := p.TransformRequestBody(route, req)
 		if err != nil {
 			return nil, errResponse(req, err.Error(), http.StatusInternalServerError)
 		}
 
 		ctxUserData(ctx).route = route
 
-		return req, nil
+		return newReq, nil
 	})
 }
 
@@ -52,12 +52,12 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 			return res
 		}
 
-		res, err := p.TransformResponseBody(ctxUserData(ctx).route, res)
+		newRes, err := p.TransformResponseBody(ctxUserData(ctx).route, res)
 		if err != nil {
 			return errResponse(res.Request, err.Error(), http.StatusInternalServerError)
 		}
 
-		return res
+		return newRes
 	})
 }
 

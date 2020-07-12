@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -64,7 +63,6 @@ func (p *Proxy) HandleResponse() goproxy.RespHandler {
 
 func (p *Proxy) TransformRequestBody(route *routing.Route, req *http.Request) (*http.Request, error) {
 	req, err := route.TransformRequest(req)
-	fmt.Println("Handlers, err", err)
 	if err != nil {
 		return nil, err
 	}

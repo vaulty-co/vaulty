@@ -30,14 +30,14 @@ type fileDef struct {
 
 type fileLoader struct {
 	enc                encrypt.Encrypter
-	secretsStorage     secrets.SecretsStorage
+	secretsStorage     secrets.Storage
 	salt               string
 	transformerFactory map[string]transformer.Factory
 }
 
 type FileLoaderOptions struct {
 	Enc                encrypt.Encrypter
-	SecretsStorage     secrets.SecretsStorage
+	SecretsStorage     secrets.Storage
 	Salt               string
 	TransformerFactory map[string]transformer.Factory
 }

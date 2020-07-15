@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/vaulty/vaulty/encrypt"
-	"github.com/vaulty/vaulty/secrets"
+	"github.com/vaulty/vaulty/secrets/memorystorage"
 	"github.com/vaulty/vaulty/transformer"
 	"github.com/vaulty/vaulty/transformer/json"
 )
@@ -14,7 +14,9 @@ func TestLoadFromFile(t *testing.T) {
 	enc, err := encrypt.NewEncrypter("")
 	require.NoError(t, err)
 
-	secretsStorage := secrets.NewEphemeralStorage(enc)
+	secretsStorage := memorystorage.New(&memorystorage.Params{
+		Encrypter: enc,
+	})
 
 	loader := &fileLoader{
 		enc:            enc,

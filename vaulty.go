@@ -13,6 +13,7 @@ import (
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
+	"github.com/vaulty/vaulty/secrets/memorystorage"
 	"github.com/vaulty/vaulty/transformer"
 	"github.com/vaulty/vaulty/transformer/form"
 	"github.com/vaulty/vaulty/transformer/json"
@@ -45,7 +46,13 @@ func Run(conf *config.Config) error {
 		return err
 	}
 
-	secretsStorage := secrets.NewEphemeralStorage(encrypter)
+	secretsStorage, err := memorystorage.Factory(&secrets.Config{
+		Encrypter:      encrypter,
+		StorageConfing: conf.Storage,
+	})
+	if err != nil {
+		return err
+	}
 
 	// Create router and load routes from file into router
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{

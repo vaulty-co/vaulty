@@ -20,18 +20,19 @@ func TestFactory(t *testing.T) {
 	require.Implements(t, (*secrets.Storage)(nil), store)
 }
 
-// func TestEphemeral(t *testing.T) {
-// 	encrypter, err := encrypt.NewEncrypter("")
-// 	require.NoError(t, err)
+func TestMemoryStorage(t *testing.T) {
+	encrypter := noneenc.New()
 
-// 	storage := NewEphemeralStorage(encrypter)
+	storage := New(&Params{
+		Encrypter: encrypter,
+	})
 
-// 	value := []byte("1")
-// 	err = storage.Set("one", value)
-// 	require.NoError(t, err)
+	value := []byte("1")
+	err := storage.Set("one", value)
+	require.NoError(t, err)
 
-// 	got, err := storage.Get("one")
-// 	require.NoError(t, err)
-// 	require.Equal(t, value, got)
+	got, err := storage.Get("one")
+	require.NoError(t, err)
+	require.Equal(t, value, got)
 
-// }
+}

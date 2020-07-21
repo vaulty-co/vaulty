@@ -21,6 +21,10 @@ type None struct {
 
 const demoNotice string = "(demo encryption)"
 
+func New() encryption.Encrypter {
+	return new(None)
+}
+
 func (*None) Encrypt(plaintext []byte) ([]byte, error) {
 	encoded := make([]byte, base64.RawStdEncoding.EncodedLen(len(plaintext)))
 

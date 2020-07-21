@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/vaulty/vaulty/config"
-	"github.com/vaulty/vaulty/encrypt"
 	"github.com/vaulty/vaulty/encryption"
+	"github.com/vaulty/vaulty/encryption/aesgcm"
 )
 
 var _ encryption.Encrypter = (*AwsKms)(nil)
@@ -79,7 +79,7 @@ func (e *AwsKms) Encrypt(plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	enc, err := encrypt.NewAesGcm(output.Plaintext)
+	enc, err := aesgcm.NewEncrypter(output.Plaintext)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (e *AwsKms) Decrypt(message []byte) ([]byte, error) {
 		CiphertextBlob: p.EncryptedKey,
 	})
 
-	enc, err := encrypt.NewAesGcm(output.Plaintext)
+	enc, err := aesgcm.NewEncrypter(output.Plaintext)
 	if err != nil {
 		return nil, err
 	}

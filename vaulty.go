@@ -47,8 +47,8 @@ func Run(conf *config.Config) error {
 	}
 
 	secretsStorage, err := memorystorage.Factory(&secrets.Config{
-		Encrypter:      encrypter,
-		StorageConfing: conf.Storage,
+		Encrypter:     encrypter,
+		StorageConfig: conf.Storage,
 	})
 	if err != nil {
 		return err

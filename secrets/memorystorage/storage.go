@@ -1,14 +1,14 @@
 package memorystorage
 
 import (
-	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/encryption"
 	"github.com/vaulty/vaulty/secrets"
 )
 
 var _ secrets.Storage = (*storage)(nil)
 
 type storage struct {
-	enc  encrypt.Encrypter
+	enc  encryption.Encrypter
 	data map[string][]byte
 }
 
@@ -22,7 +22,7 @@ func Factory(conf *secrets.Config) (secrets.Storage, error) {
 type Params struct {
 	// Enc is Encrypter that used to encrypt/decrypt data before putting it
 	// into data storage
-	Encrypter encrypt.Encrypter
+	Encrypter encryption.Encrypter
 }
 
 func New(params *Params) secrets.Storage {

@@ -4,13 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/encryption/noneenc"
 	"github.com/vaulty/vaulty/secrets/memorystorage"
 )
 
 func TestTokenizeDetokenize(t *testing.T) {
-	encrypter, err := encrypt.NewEncrypter("")
-	require.NoError(t, err)
+	encrypter := noneenc.New()
 
 	secretsStorage := memorystorage.New(&memorystorage.Params{
 		Encrypter: encrypter,
@@ -34,8 +33,7 @@ func TestTokenizeDetokenize(t *testing.T) {
 }
 
 func TestTokenizeWithFormat(t *testing.T) {
-	encrypter, err := encrypt.NewEncrypter("")
-	require.NoError(t, err)
+	encrypter := noneenc.New()
 
 	secretsStorage := memorystorage.New(&memorystorage.Params{
 		Encrypter: encrypter,

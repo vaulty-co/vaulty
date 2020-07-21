@@ -17,8 +17,8 @@ type Storage interface {
 }
 
 type Config struct {
-	Encrypter      encryption.Encrypter
-	StorageConfing *config.Storage
+	Encrypter     encryption.Encrypter
+	StorageConfig *config.Storage
 }
 
 type Factory func(conf *Config) (Storage, error)

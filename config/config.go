@@ -58,6 +58,8 @@ type (
 		// Storage Type
 		Type string `envconfig:"VAULTY_STORAGE_TYPE" default:"memory"`
 		// ...
+
+		RedisURL string `envconfig:"REDIS_URL"`
 	}
 )
 

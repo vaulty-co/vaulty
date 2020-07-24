@@ -5,7 +5,7 @@ import (
 )
 
 type Detokenize struct {
-	secretsStorage secrets.SecretsStorage
+	secretsStorage secrets.Storage
 }
 
 func (a *Detokenize) Transform(token []byte) ([]byte, error) {

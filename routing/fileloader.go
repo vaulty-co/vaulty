@@ -7,7 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vaulty/vaulty/action"
-	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/encryption"
 	"github.com/vaulty/vaulty/secrets"
 	"github.com/vaulty/vaulty/transformer"
 )
@@ -29,15 +29,15 @@ type fileDef struct {
 }
 
 type fileLoader struct {
-	enc                encrypt.Encrypter
-	secretsStorage     secrets.SecretsStorage
+	enc                encryption.Encrypter
+	secretsStorage     secrets.Storage
 	salt               string
 	transformerFactory map[string]transformer.Factory
 }
 
 type FileLoaderOptions struct {
-	Enc                encrypt.Encrypter
-	SecretsStorage     secrets.SecretsStorage
+	Enc                encryption.Encrypter
+	SecretsStorage     secrets.Storage
 	Salt               string
 	TransformerFactory map[string]transformer.Factory
 }
@@ -54,7 +54,7 @@ func NewFileLoader(opts *FileLoaderOptions) *fileLoader {
 func (l *fileLoader) Load(filename string) ([]*Route, error) {
 	rawJSON, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to load routes file (%s); %s", filename, err)
 	}
 
 	var input fileDef

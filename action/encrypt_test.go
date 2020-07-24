@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vaulty/vaulty/encrypt"
+	"github.com/vaulty/vaulty/encryption/noneenc"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
-	encrypter, err := encrypt.NewEncrypter("")
-	require.NoError(t, err)
+	encrypter := noneenc.New()
 
 	plaintext := []byte("hello")
 

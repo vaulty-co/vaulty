@@ -1,9 +1,9 @@
 package action
 
-import "github.com/vaulty/vaulty/encrypt"
+import "github.com/vaulty/vaulty/encryption"
 
 type Encrypt struct {
-	enc encrypt.Encrypter
+	enc encryption.Encrypter
 }
 
 func (a *Encrypt) Transform(body []byte) ([]byte, error) {

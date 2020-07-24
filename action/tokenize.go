@@ -8,7 +8,7 @@ import (
 )
 
 type Tokenize struct {
-	secretsStorage secrets.SecretsStorage
+	secretsStorage secrets.Storage
 	Format         string
 }
 

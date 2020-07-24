@@ -33,6 +33,8 @@ type (
 		Salt string
 
 		Encryption *Encryption
+
+		Storage *Storage
 	}
 
 	Encryption struct {
@@ -50,6 +52,14 @@ type (
 
 		// Alias of AWS KMS Master Key (optional if KMSKeyID is set)
 		AWSKMSKeyAlias string `envconfig:"VAULTY_ENCRYPTION_AWS_KMS_KEY_ALIAS"`
+	}
+
+	Storage struct {
+		// Storage Type
+		Type string `envconfig:"VAULTY_STORAGE_TYPE" default:"memory"`
+		// ...
+
+		RedisURL string `envconfig:"REDIS_URL"`
 	}
 )
 

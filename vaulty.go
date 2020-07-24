@@ -13,6 +13,8 @@ import (
 	"github.com/vaulty/vaulty/proxy"
 	"github.com/vaulty/vaulty/routing"
 	"github.com/vaulty/vaulty/secrets"
+	"github.com/vaulty/vaulty/secrets/memorystorage"
+	"github.com/vaulty/vaulty/secrets/redisstorage"
 	"github.com/vaulty/vaulty/transformer"
 	"github.com/vaulty/vaulty/transformer/form"
 	"github.com/vaulty/vaulty/transformer/json"
@@ -31,6 +33,11 @@ var transformers = map[string]transformer.Factory{
 	"form":   form.Factory,
 }
 
+var storages = map[string]secrets.Factory{
+	"memory": memorystorage.Factory,
+	"redis":  redisstorage.Factory,
+}
+
 func Run(conf *config.Config) error {
 	if conf.Debug {
 		log.SetFormatter(&log.TextFormatter{
@@ -45,7 +52,13 @@ func Run(conf *config.Config) error {
 		return err
 	}
 
-	secretsStorage := secrets.NewEphemeralStorage(encrypter)
+	secretsStorage, err := storages[conf.Storage.Type](&secrets.Config{
+		Encrypter:     encrypter,
+		StorageConfig: conf.Storage,
+	})
+	if err != nil {
+		return err
+	}
 
 	// Create router and load routes from file into router
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{

@@ -79,4 +79,6 @@ In postman-echo response you can see that it received an encrypted card.number i
 {"args":{},"data":{"card":{"number":"NDI0MjQyNDI0MjQyNDI0Mg(demo encryption)","exp":"10/22"}},"files":{},"form":{},"headers":{"x-forwarded-proto":"https","x-forwarded-port":"443","host":"127.0.0.1","x-amzn-trace-id":"Root=1-5ec1412f-6ab8d3f28110822b8a425e81","content-length":"83","user-agent":"curl/7.64.1","accept":"*/*","content-type":"application/json","accept-encoding":"gzip"},"json":{"card":{"number":"NDI0MjQyNDI0MjQyNDI0Mg(demo encryption)","exp":"10/22"}},"url":"https://127.0.0.1/post"}%
 ```
 
+<img src="https://docs.vaulty.co/img/reference/none-enc.gif"/>
+
 That's it for the quick start! More information about Vaulty configuration, routes, transformations can be found here: https://docs.vaulty.co/

@@ -1,8 +1,12 @@
 package vaulty
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/config"
@@ -59,6 +63,7 @@ func Run(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
+	defer secretsStorage.Close()
 
 	// Create router and load routes from file into router
 	loader := routing.NewFileLoader(&routing.FileLoaderOptions{
@@ -87,6 +92,30 @@ func Run(conf *config.Config) error {
 		return err
 	}
 
-	fmt.Printf("==> Vaulty proxy server started on %v!\n", conf.Address)
-	return http.ListenAndServe(conf.Address, proxy)
+	done := make(chan struct{}, 1)
+
+	server := &http.Server{Addr: conf.Address, Handler: proxy}
+	go func() {
+		log.Infof("Vaulty proxy server started on %v!\n", conf.Address)
+
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Errorf("Failed to listen and serve: %v", err)
+		}
+	}()
+
+	go func() {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+		<-sigs
+
+		log.Info("Shutting down Vaulty...")
+		if err := server.Shutdown(context.Background()); err != nil {
+			log.Errorf("Failed to clearly shutdown Vaulty: %v", err)
+		}
+		done <- struct{}{}
+	}()
+
+	<-done
+	return nil
 }

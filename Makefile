@@ -1,14 +1,14 @@
-VERSION=`git describe --tags`
+VERSION=1.0
 BUILD=`date +%FT%T%z`
 LDFLAGS=-ldflags "-w -s -X main.Version=${VERSION} -X main.Build=${BUILD} -X main.Entry=f1"
  
-NAME   := vaulty/vaulty
+NAME   := ciceros/vaulty
 IMG    := ${NAME}:${VERSION}
 LATEST := ${NAME}:latest
 
 build:
 	rm -rf ./bin/*
-	go build ${LDFLAGS} -o bin ./...
+	go build -o bin ${LDFLAGS} ./...
 	mv ./bin/cmd ./bin/vaulty
 
 run:

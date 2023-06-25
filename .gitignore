@@ -5,3 +5,4 @@
 .env
 ca.key
 ca.cert
+bin

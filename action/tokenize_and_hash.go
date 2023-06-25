@@ -39,7 +39,7 @@ func (a *TokenizeAndHash) Transform(body []byte) ([]byte, error) {
 
 	hash := string(newBody[:])
 
-	a.secretsStorage.Set(hash, []byte(token))
+	a.secretsStorage.SetWithoutCrypto(hash, token)
 
 	return []byte(token), nil
 }

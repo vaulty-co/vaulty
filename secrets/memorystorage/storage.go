@@ -45,6 +45,14 @@ func (s *storage) Set(key string, val []byte) error {
 	return nil
 }
 
+// Set valye and adds it to the map. It doesn't check for existing
+// value and rewrites if it was set before.
+func (s *storage) SetWithoutCrypto(key string, val string) error {
+	s.data[key] = []byte(val)
+	return nil
+}
+
+
 // Get decrypts the value from the map and returns it.
 func (s *storage) Get(key string) ([]byte, error) {
 	encrypted := s.data[key]

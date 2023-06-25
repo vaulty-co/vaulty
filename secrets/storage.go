@@ -9,6 +9,7 @@ import (
 
 type Storage interface {
 	Set(key string, val []byte) error
+	SetWithoutCrypto(key string, val string) error
 	Get(key string) ([]byte, error)
 
 	// Close terminates connections that may remain open. It also

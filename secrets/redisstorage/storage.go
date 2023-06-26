@@ -67,6 +67,15 @@ func (s *storage) Set(key string, val []byte) error {
 	return nil
 }
 
+
+// Set value and adds it to the map. It doesn't check for existing
+// value and rewrites if it was set before.
+func (s *storage) SetWithoutCrypto(key string, val string) error {
+	s.db.Set(key, val, 0).Result()
+
+	return nil
+}
+
 // Get decrypts the value from the map and returns it.
 func (s *storage) Get(key string) ([]byte, error) {
 	encrypted, err := s.db.Get(key).Result()

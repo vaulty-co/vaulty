@@ -16,6 +16,7 @@ func TestCreateProxyWithConfig(t *testing.T) {
 	conf := &config.Config{
 		CAPath:     cadir,
 		RoutesFile: "./routing/testdata/routes.json",
+		Address:    "localhost:0",
 	}
 
 	err := conf.FromEnvironment()

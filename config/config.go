@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -93,8 +92,8 @@ func (c *Config) GenerateMissedValues() error {
 			caCertFile, caKeyFile)
 
 		rootCertPEM, rootKeyPEM := ca.GenCA()
-		ioutil.WriteFile(caCertFile, rootCertPEM, 0644)
-		ioutil.WriteFile(caKeyFile, rootKeyPEM, 0644)
+		os.WriteFile(caCertFile, rootCertPEM, 0644)
+		os.WriteFile(caKeyFile, rootKeyPEM, 0644)
 	}
 
 	return nil

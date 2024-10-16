@@ -3,7 +3,7 @@ package regexp
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -139,13 +139,13 @@ func TestRegexp(t *testing.T) {
 		require.NoError(t, err)
 
 		req, err = tr.TransformRequest(req)
-		newBody, err := ioutil.ReadAll(req.Body)
+		newBody, err := io.ReadAll(req.Body)
 		require.Equal(t, "number: 1xxxx whatever number: 5xxxx", string(newBody))
 	})
 
 	t.Run("Test response transformation", func(t *testing.T) {
 		res := &http.Response{
-			Body:   ioutil.NopCloser(strings.NewReader(`number: 12345 whatever number: 54321`)),
+			Body:   io.NopCloser(strings.NewReader(`number: 12345 whatever number: 54321`)),
 			Header: http.Header{"Content-Type": {"plain/text"}},
 		}
 
@@ -161,7 +161,7 @@ func TestRegexp(t *testing.T) {
 
 		res, err = tr.TransformResponse(res)
 		require.NoError(t, err)
-		newBody, err := ioutil.ReadAll(res.Body)
+		newBody, err := io.ReadAll(res.Body)
 		require.Equal(t, "number: 1xxxx whatever number: 5xxxx", string(newBody))
 	})
 

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -81,7 +80,7 @@ func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, 
 }
 
 func (t *Transformation) transformFormData(req *http.Request) error {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
@@ -111,7 +110,7 @@ func (t *Transformation) transformFormData(req *http.Request) error {
 	}
 
 	newBodyReader := strings.NewReader(data.Encode())
-	req.Body = ioutil.NopCloser(newBodyReader)
+	req.Body = io.NopCloser(newBodyReader)
 	req.Header.Del("Content-Length")
 	req.ContentLength = int64(newBodyReader.Len())
 
@@ -142,7 +141,7 @@ func (t *Transformation) transformMultipartFormData(req *http.Request, boundary 
 
 		// if part for the field we have to transform
 		if isInSlice(t.fields, part.FormName()) {
-			body, err := ioutil.ReadAll(part)
+			body, err := io.ReadAll(part)
 			if err != nil {
 				return err
 			}
@@ -160,7 +159,7 @@ func (t *Transformation) transformMultipartFormData(req *http.Request, boundary 
 	}
 	mw.Close()
 
-	req.Body = ioutil.NopCloser(bufio.NewReader(&b))
+	req.Body = io.NopCloser(bufio.NewReader(&b))
 	req.Header.Del("Content-Length")
 	req.ContentLength = int64(b.Len())
 

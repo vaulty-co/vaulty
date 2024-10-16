@@ -3,8 +3,9 @@ package form
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation of multipart/form-data", func(t *testing.T) {
-		formData, err := ioutil.ReadFile("./testdata/form-data.txt")
+		formData, err := os.ReadFile("./testdata/form-data.txt")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
@@ -58,7 +59,7 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation of array of multipart/form-data", func(t *testing.T) {
-		formData, err := ioutil.ReadFile("./testdata/form-data.txt")
+		formData, err := os.ReadFile("./testdata/form-data.txt")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
@@ -80,7 +81,7 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation of invalid multipart/form-data", func(t *testing.T) {
-		formData, err := ioutil.ReadFile("./testdata/invalid-form-data.txt")
+		formData, err := os.ReadFile("./testdata/invalid-form-data.txt")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
@@ -98,7 +99,7 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation of invalid multipart/form-data", func(t *testing.T) {
-		formData, err := ioutil.ReadFile("./testdata/invalid-form-data.txt")
+		formData, err := os.ReadFile("./testdata/invalid-form-data.txt")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest("POST", "/url", bytes.NewReader(formData))
@@ -148,7 +149,7 @@ func TestForm(t *testing.T) {
 	})
 
 	t.Run("Test request transformation with unsupported content type", func(t *testing.T) {
-		body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+		body := io.NopCloser(bytes.NewReader([]byte("{}")))
 		req, _ := http.NewRequest("POST", "/request", body)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -165,7 +166,7 @@ func TestForm(t *testing.T) {
 
 	t.Run("Test response transformation does not transform response", func(t *testing.T) {
 		res := &http.Response{
-			Body: ioutil.NopCloser(bytes.NewReader([]byte("body"))),
+			Body: io.NopCloser(bytes.NewReader([]byte("body"))),
 		}
 
 		tr, err := NewTransformation(&Params{

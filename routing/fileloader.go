@@ -3,7 +3,7 @@ package routing
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vaulty/vaulty/action"
@@ -52,7 +52,7 @@ func NewFileLoader(opts *FileLoaderOptions) *fileLoader {
 }
 
 func (l *fileLoader) Load(filename string) ([]*Route, error) {
-	rawJSON, err := ioutil.ReadFile(filename)
+	rawJSON, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load routes file (%s); %s", filename, err)
 	}

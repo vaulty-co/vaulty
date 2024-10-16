@@ -3,8 +3,8 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/elazarl/goproxy"
@@ -60,12 +60,12 @@ func NewProxy(opts *Options) (*Proxy, error) {
 }
 
 func setupCA(CAPath string) error {
-	caCert, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.cert"))
+	caCert, err := os.ReadFile(filepath.Join(CAPath, "ca.cert"))
 	if err != nil {
 		return err
 	}
 
-	caKey, err := ioutil.ReadFile(filepath.Join(CAPath, "ca.key"))
+	caKey, err := os.ReadFile(filepath.Join(CAPath, "ca.key"))
 	if err != nil {
 		return err
 	}

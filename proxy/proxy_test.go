@@ -5,11 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -29,14 +29,14 @@ var upstream = httptest.NewTLSServer(EchoHandler{})
 type fakeTransformer struct{}
 
 func (f *fakeTransformer) TransformRequest(req *http.Request) (*http.Request, error) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	body = append(body, " transformed"...)
 
-	req.Body = ioutil.NopCloser(bytes.NewReader(body))
+	req.Body = io.NopCloser(bytes.NewReader(body))
 	req.Header.Del("Content-Length")
 	req.ContentLength = int64(len(body))
 
@@ -44,7 +44,7 @@ func (f *fakeTransformer) TransformRequest(req *http.Request) (*http.Request, er
 }
 
 func (f *fakeTransformer) TransformResponse(res *http.Response) (*http.Response, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (f *fakeTransformer) TransformResponse(res *http.Response) (*http.Response,
 
 	body = append(body, " transformed"...)
 
-	res.Body = ioutil.NopCloser(bytes.NewReader(body))
+	res.Body = io.NopCloser(bytes.NewReader(body))
 	res.Header.Del("Content-Length")
 	res.ContentLength = int64(len(body))
 
@@ -141,7 +141,7 @@ func TestOutboundRoute(t *testing.T) {
 	proxy := httptest.NewServer(ps.server)
 	defer proxy.Close()
 
-	caCert, err := ioutil.ReadFile(filepath.Join(opts.CAPath, "ca.cert"))
+	caCert, err := os.ReadFile(filepath.Join(opts.CAPath, "ca.cert"))
 	require.NoError(t, err)
 
 	caCertPool := x509.NewCertPool()
@@ -259,7 +259,7 @@ func TestOutboundRoute(t *testing.T) {
 }
 
 func readBody(body io.ReadCloser) string {
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err == nil {
 		return string(b)
 	}

@@ -2,7 +2,7 @@ package json
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -160,12 +160,12 @@ func TestJson(t *testing.T) {
 
 		req, err = tr.TransformRequest(req)
 		require.NoError(t, err)
-		newBody, err := ioutil.ReadAll(req.Body)
+		newBody, err := io.ReadAll(req.Body)
 		require.Equal(t, `{"name": "transformed"}`, string(newBody))
 	})
 
 	t.Run("Test request transformation with unsupported content type", func(t *testing.T) {
-		body := ioutil.NopCloser(strings.NewReader(`{"name": "John"}`))
+		body := io.NopCloser(strings.NewReader(`{"name": "John"}`))
 		req, _ := http.NewRequest("POST", "/request", body)
 		req.Header.Set("Content-Type", "text/plain")
 
@@ -182,7 +182,7 @@ func TestJson(t *testing.T) {
 
 	t.Run("Test response transformation", func(t *testing.T) {
 		res := &http.Response{
-			Body:   ioutil.NopCloser(strings.NewReader(`{"name": "John"}`)),
+			Body:   io.NopCloser(strings.NewReader(`{"name": "John"}`)),
 			Header: http.Header{"Content-Type": {"application/json"}},
 		}
 
@@ -196,12 +196,12 @@ func TestJson(t *testing.T) {
 
 		res, err = tr.TransformResponse(res)
 		require.NoError(t, err)
-		newBody, err := ioutil.ReadAll(res.Body)
+		newBody, err := io.ReadAll(res.Body)
 		require.Equal(t, `{"name": "transformed"}`, string(newBody))
 	})
 
 	t.Run("Test response transformation with unsupported content type", func(t *testing.T) {
-		body := ioutil.NopCloser(strings.NewReader(`{"name": "John"}`))
+		body := io.NopCloser(strings.NewReader(`{"name": "John"}`))
 		res := &http.Response{
 			Body:   body,
 			Header: http.Header{"Content-Type": {"text/plain"}},

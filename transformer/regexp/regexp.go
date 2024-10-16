@@ -2,7 +2,7 @@ package regexp
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 
@@ -56,7 +56,7 @@ func NewTransformation(params *Params) (*Transformation, error) {
 }
 
 func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, error) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, err
 		return nil, err
 	}
 
-	req.Body = ioutil.NopCloser(bytes.NewReader(newBody))
+	req.Body = io.NopCloser(bytes.NewReader(newBody))
 	req.Header.Del("Content-Length")
 	req.ContentLength = int64(len(newBody))
 
@@ -74,7 +74,7 @@ func (t *Transformation) TransformRequest(req *http.Request) (*http.Request, err
 }
 
 func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (t *Transformation) TransformResponse(res *http.Response) (*http.Response, 
 		return nil, err
 	}
 
-	res.Body = ioutil.NopCloser(bytes.NewReader(newBody))
+	res.Body = io.NopCloser(bytes.NewReader(newBody))
 	res.Header.Del("Content-Length")
 	res.ContentLength = int64(len(newBody))
 

@@ -1,8 +1,6 @@
 package vaulty
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,11 +13,7 @@ import (
 
 func TestCreateProxyWithConfig(t *testing.T) {
 	// create temporary directory to generate CA files
-	tmpCAdir, err := ioutil.TempDir("", "vaulty-ca")
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	tmpCAdir := os.TempDir()
 	defer os.RemoveAll(tmpCAdir) // clean up
 
 	conf := &config.Config{
@@ -27,7 +21,7 @@ func TestCreateProxyWithConfig(t *testing.T) {
 		RoutesFile: "./routing/testdata/routes.json",
 	}
 
-	err = conf.FromEnvironment()
+	err := conf.FromEnvironment()
 	require.NoError(t, err)
 
 	err = conf.GenerateMissedValues()

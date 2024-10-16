@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vaulty/vaulty/config"
@@ -42,7 +39,7 @@ var storages = map[string]secrets.Factory{
 	"redis":  redisstorage.Factory,
 }
 
-func Run(conf *config.Config) error {
+func Run(ctx context.Context, conf *config.Config) error {
 	if conf.Debug {
 		log.SetFormatter(&log.TextFormatter{
 			ForceColors: true,
@@ -92,7 +89,7 @@ func Run(conf *config.Config) error {
 		return err
 	}
 
-	done := make(chan struct{}, 1)
+	done := make(chan error, 1)
 
 	server := &http.Server{Addr: conf.Address, Handler: proxy}
 	go func() {
@@ -101,21 +98,18 @@ func Run(conf *config.Config) error {
 		err := server.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			log.Errorf("Failed to listen and serve: %v", err)
+			done <- err
 		}
 	}()
 
-	go func() {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-		<-sigs
-
+	select {
+	case <-ctx.Done():
 		log.Info("Shutting down Vaulty...")
 		if err := server.Shutdown(context.Background()); err != nil {
 			log.Errorf("Failed to clearly shutdown Vaulty: %v", err)
 		}
-		done <- struct{}{}
-	}()
-
-	<-done
-	return nil
+		return nil
+	case err := <-done:
+		return err
+	}
 }

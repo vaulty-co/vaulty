@@ -8,8 +8,7 @@ LATEST := ${NAME}:latest
 
 build:
 	rm -rf ./bin/*
-	go build ${LDFLAGS} -o bin ./...
-	mv ./bin/cmd ./bin/vaulty
+	go build ${LDFLAGS} -o bin/ ./cmd/vaulty
 
 run:
 	go run ./cmd

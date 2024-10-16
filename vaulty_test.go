@@ -1,9 +1,7 @@
 package vaulty
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
+	"context"
 	"testing"
 	"time"
 
@@ -13,11 +11,10 @@ import (
 
 func TestCreateProxyWithConfig(t *testing.T) {
 	// create temporary directory to generate CA files
-	tmpCAdir := os.TempDir()
-	defer os.RemoveAll(tmpCAdir) // clean up
+	cadir := "testdata"
 
 	conf := &config.Config{
-		CAPath:     tmpCAdir,
+		CAPath:     cadir,
 		RoutesFile: "./routing/testdata/routes.json",
 	}
 
@@ -27,28 +24,21 @@ func TestCreateProxyWithConfig(t *testing.T) {
 	err = conf.GenerateMissedValues()
 	require.NoError(t, err)
 
-	done := make(chan struct{}, 1)
+	ctx, cancel := context.WithCancel(context.Background())
 
+	done := make(chan struct{})
 	go func() {
-		err := Run(conf)
+		err := Run(ctx, conf)
 		require.NoError(t, err)
+		close(done)
 	}()
 
-	go func() {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGTERM)
-		done <- struct{}{}
-		<-sigs
-	}()
+	// wait for the server to start
+	time.Sleep(1 * time.Second)
 
+	// send signal to stop the server
+	cancel()
+
+	// wait for the server to stop
 	<-done
-
-	time.Sleep(1 * time.Second / 2)
-
-	pid := syscall.Getpid()
-	p, err := os.FindProcess(pid)
-	require.NoErrorf(t, err, "Failed to find current process: %v", err)
-
-	err = p.Signal(syscall.SIGTERM)
-	require.NoErrorf(t, err, "Failed to signal process: %v", err)
 }

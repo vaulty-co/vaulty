@@ -5,7 +5,7 @@ ADD go.mod /build
 WORKDIR /build 
 RUN go mod download
 ADD . /build/
-RUN go build -o bin ./... && mv ./bin/cmd ./bin/vaulty
+RUN go build -o bin ./cmd/vaulty
 FROM alpine
 RUN adduser -S -D -H -h /vaulty appuser
 RUN mkdir /.vaulty 

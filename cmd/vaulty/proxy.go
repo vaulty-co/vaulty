@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
 
 	"github.com/urfave/cli/v2"
 	"github.com/vaulty/vaulty"
@@ -61,6 +64,9 @@ var proxyCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		defer stop()
+
 		if err := conf.FromEnvironment(); err != nil {
 			return err
 		}
@@ -69,6 +75,6 @@ var proxyCommand = &cli.Command{
 			return fmt.Errorf("Error with generating missed values: %s", err)
 		}
 
-		return vaulty.Run(conf)
+		return vaulty.Run(ctx, conf)
 	},
 }

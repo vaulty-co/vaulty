@@ -21,9 +21,15 @@ Links:
  * [Documentation](https://docs.vaulty.co)
  * [Cookbooks](https://docs.vaulty.co/cookbooks/intro)
 
-## Prerequisites
+## Installation
 
 For the quick start the only thing you need is [Docker](https://docs.docker.com/install/).
+
+Or you can install it using Go:
+
+```bash
+go install github.com/vaulty/vaulty/cmd/vaulty
+```
 
 ## Try it now!
 
@@ -53,10 +59,16 @@ Create a directory for experiments with Vaulty. In the directory, let's create s
 
 In short, Vaulty will encrypt `card.number` element of JSON body of all POST requests with /post path and then send it [http://postman-echo.com](http://postman-echo.com) (postman-echo is echo server; it will return all data it receives).
 
-Now, let's run Vaulty as a proxy:
+Now, let's run Vaulty as a proxy using Docker:
 
 ```bash
 docker run -p 8080:8080 -v ${PWD}:/.vaulty vaulty/vaulty
+```
+
+or using installed Go binary:
+
+```bash
+vaulty proxy
 ```
 
 You should see something like this:
